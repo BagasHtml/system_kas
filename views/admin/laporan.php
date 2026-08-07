@@ -87,7 +87,7 @@ $belum_bayar = $ada_target
     <div class="table-container">
         <div class="table-header">
             <h6>Matriks Pembayaran per Siswa</h6>
-            <span style="font-size:11px;color:var(--text-secondary);"><?= count($siswa) ?> siswa &times; <?= count($periode_list) ?> periode</span>
+            <span style="font-size:11px;color:var(--text-secondary);"><?= count($siswa) ?> siswa &times; <?= count($periode_list) ?> bulan</span>
         </div>
         <div class="table-responsive">
             <table class="table lap-matrix">

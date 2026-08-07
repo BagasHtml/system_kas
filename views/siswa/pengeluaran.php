@@ -49,8 +49,8 @@ $siswa_nama  = htmlspecialchars($_SESSION['nama'] ?? 'Siswa');
 $siswa_absen = htmlspecialchars($_SESSION['siswa_absen'] ?? '-');
 
 $kpis = [
-    ['label' => 'Sisa Saldo Kas', 'value' => rupiah($saldo), 'tone' => 'accent'],
     ['label' => 'Total Pengeluaran', 'value' => rupiah($total), 'note' => $total_transaksi . ' transaksi', 'tone' => 'danger'],
+    ['label' => 'Sisa Saldo Kas', 'value' => rupiah($saldo), 'tone' => 'accent'],
     ['label' => 'Total Transaksi', 'value' => (string)$total_transaksi, 'tone' => 'info'],
     ['label' => 'Rata-rata / Transaksi', 'value' => rupiah($total_transaksi > 0 ? $total / $total_transaksi : 0), 'tone' => 'warn'],
 ];

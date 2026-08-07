@@ -24,7 +24,7 @@
     <section class="lp-hero lp-container rv">
         <h1 class="lp-h1">Kas kelas dicatat rapi,<br>transparan ke <em>semua orang</em>.</h1>
         <p class="lp-lead">
-            Sistem Kas Kelas membantu pengurus mencatat iuran tiap periode, melacak siapa yang
+            Sistem Kas Kelas membantu pengurus mencatat iuran tiap bulan, melacak siapa yang
             sudah atau belum bayar, dan menampilkan pengeluaran kas secara terbuka —
             ke guru, pengurus, dan seluruh siswa.
         </p>
@@ -43,7 +43,7 @@
             <div class="lp-points">
                 <article class="lp-point rv">
                     <div class="lp-point-num">01</div>
-                    <h3>Catat iuran per periode</h3>
+                    <h3>Catat iuran per bulan</h3>
                     <p>Pembayaran kas dicatat per bulan. Status terkumpul atau belum terlihat per siswa, lengkap dengan tanggal bayarnya.</p>
                 </article>
                 <article class="lp-point rv">
@@ -54,7 +54,7 @@
                 <article class="lp-point rv">
                     <div class="lp-point-num">03</div>
                     <h3>Laporan ringkas</h3>
-                    <p>Total masuk, total keluar, dan sisa saldo dihitung otomatis. Siap dicetak per periode.</p>
+                    <p>Total masuk, total keluar, dan sisa saldo dihitung otomatis. Siap dicetak per bulan.</p>
                 </article>
             </div>
         </div>
@@ -105,7 +105,7 @@
                     </div>
                     <div class="preview-cap">
                         <h3>Dasbor Siswa</h3>
-                        <p>Status pembayaran pribadi per periode, sisa saldo kas, dan daftar pengeluaran kelas — semua tampil apa adanya.</p>
+                        <p>Status pembayaran pribadi per bulan, sisa saldo kas, dan daftar pengeluaran kelas — semua tampil apa adanya.</p>
                     </div>
                 </div>
             </div>

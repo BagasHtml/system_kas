@@ -168,8 +168,6 @@ class Koneksi {
     return $t;
   }
 
-  /* ===== Flash message ===== */
-
   public static function setFlash(string $type, string $message)
   {
     if (session_status() === PHP_SESSION_NONE) session_start();

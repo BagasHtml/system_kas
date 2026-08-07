@@ -124,9 +124,9 @@ $pg_query = http_build_query(['cari' => $cari]);
                 <thead>
                     <tr>
                         <th style="text-align: center;width:60px;">No</th>
-                        <th>Nama Siswa</th>
-                        <th style="width:120px;">Nomor Absen</th>
-                        <th style="width:180px;">Tanggal Daftar</th>
+                        <th style="text-align:center;">Nama Siswa</th>
+                        <th style="width:120px; text-align:center;">Nomor Absen</th>
+                        <th style="width:180px; text-align:center;">Tanggal Daftar</th>
                         <th style="text-align:center;width:130px;">Aksi</th>
                     </tr>
                 </thead>
@@ -142,9 +142,9 @@ $pg_query = http_build_query(['cari' => $cari]);
                         <?php foreach ($siswa as $s): ?>
                             <tr>
                                 <td style="text-align:center;color:var(--text-muted);"><?= $no++ ?></td>
-                                <td style="font-weight:600;"><?= htmlspecialchars($s['nama']) ?></td>
-                                <td style="font-weight:600;"><?= (int)$s['nomor_absen'] ?></td>
-                                <td style="color:var(--text-secondary);"><?= date('d/m/Y', strtotime($s['created_at'])) ?></td>
+                                <td style="font-weight:600; text-align:center;"><?= htmlspecialchars($s['nama']) ?></td>
+                                <td style="font-weight:600; text-align:center;"><?= (int)$s['nomor_absen'] ?></td>
+                                <td style="color:var(--text-secondary); text-align:center;"><?= date('d/m/Y', strtotime($s['created_at'])) ?></td>
                                 <td style="text-align:center;">
                                     <div style="display:flex;gap:4px;justify-content:center;">
                                         <button class="btn-outline-custom" style="padding:4px 10px;"

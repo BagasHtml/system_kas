@@ -197,34 +197,36 @@ if ($selected_periode_db !== '') {
 }
 ?>
 
-<div class="main-content">
-    <div class="page-header">
+<div class="main-content dash-page">
+    <div class="dash-topbar">
         <div>
-            <h4>Pembayaran Kas</h4>
-            <div class="sub">Kelola status pembayaran kas per bulan</div>
+            <h1 class="dash-title">Pembayaran Kas</h1>
+            <p class="dash-subtitle">Kelola status pembayaran kas per bulan</p>
         </div>
-        <div style="display:flex;gap:8px;">
+        <div class="dash-topbar-actions">
             <form action="" method="GET">
                 <input type="month" name="periode"
                        value="<?= htmlspecialchars($selected_periode) ?>"
-                       style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-family:'Inter',sans-serif;"
+                       style="font-size:12px;padding:8px 14px;border:1px solid var(--border);border-radius:999px;font-family:'Inter',sans-serif;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.03);"
                        onchange="this.form.submit()">
             </form>
-            <button class="btn-primary-custom" data-bs-toggle="modal" data-bs-target="#modalPembayaran">
-                <i class="bi bi-plus-lg"></i> Tambah
+            <button class="dash-btn dash-btn-primary" data-bs-toggle="modal" data-bs-target="#modalPembayaran">
+                <?= ic('<path d="M12 5v14M5 12h14"/>', 15) ?> Tambah
             </button>
         </div>
     </div>
 
     <?php Koneksi::renderFlash(); ?>
 
-    <div class="table-container" style="margin-bottom:16px;">
-        <div class="table-header">
-            <h6>Target Kas Kelas</h6>
-            <span style="font-size:11px;color:var(--text-secondary);">Besaran kas yang disepakati kelas untuk tiap bulan</span>
+    <div class="dash-card" style="margin-bottom:22px;">
+        <div class="dash-card-head">
+            <div>
+                <div class="dash-card-title">Target Kas Kelas</div>
+                <div class="dash-card-sub">Besaran kas yang disepakati kelas untuk tiap bulan</div>
+            </div>
         </div>
-        <div style="padding:16px;">
-            <form method="post" action="" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+        <div>
+            <form method="post" action="" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
                 <?= Koneksi::csrfField() ?>
                 <div>
                     <label class="form-label">Bulan</label>
@@ -240,26 +242,28 @@ if ($selected_periode_db !== '') {
                     <label class="form-label">Keterangan (opsional)</label>
                     <input type="text" class="form-control" name="t_keterangan" placeholder="mis. disepakati rapat kelas">
                 </div>
-                <button type="submit" name="simpan_target" value="1" class="btn-primary-custom">Simpan Target</button>
+                <button type="submit" name="simpan_target" value="1" class="dash-btn dash-btn-primary">Simpan Target</button>
             </form>
 
             <?php if ($period_target !== null): ?>
-                <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
-                    <div style="display:flex;justify-content:space-between;align-items:baseline;font-size:12px;margin-bottom:6px;">
+                <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;font-size:12px;margin-bottom:8px;">
                         <span>Target <?= htmlspecialchars(Koneksi::periodeLabel($selected_periode_db)) ?></span>
                         <span>
-                            <b>Terkumpul <?= rupiah($period_collected) ?></b>
+                            <b>Sudah dibayar <?= rupiah($period_collected) ?></b>
                             dari <?= rupiah($period_target) ?>
                             (<?= min(100, round($period_collected / $period_target * 100)) ?>%)
                         </span>
                     </div>
-                    <div class="target-track">
-                        <div class="target-fill" style="width:<?= min(100, round($period_collected / $period_target * 100)) ?>%"></div>
+                    <div class="dash-progress" style="margin-top:0;">
+                        <div class="track">
+                            <div class="fill" style="width:<?= min(100, round($period_collected / $period_target * 100)) ?>%"></div>
+                        </div>
                     </div>
                     <?php if ($period_collected >= $period_target): ?>
-                        <div style="margin-top:6px;font-size:12px;color:var(--success);font-weight:600;">Target bulan ini tercapai.</div>
+                        <div style="margin-top:10px;font-size:12px;color:var(--success);font-weight:600;">Target bulan ini tercapai.</div>
                     <?php else: ?>
-                        <div style="margin-top:6px;font-size:12px;color:var(--text-secondary);">
+                        <div style="margin-top:10px;font-size:12px;color:var(--text-secondary);">
                             Tersisa <?= rupiah(max(0, $period_target - $period_collected)) ?> menuju target kelas.
                         </div>
                     <?php endif; ?>
@@ -267,41 +271,46 @@ if ($selected_periode_db !== '') {
             <?php endif; ?>
 
             <?php if ($target_map): ?>
-                <table class="table" style="margin-top:14px;">
-                    <thead>
-                        <tr>
-                            <th>Bulan</th>
-                            <th style="text-align:right;">Target</th>
-                            <th>Keterangan</th>
-                            <th style="text-align:center;width:80px;">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($target_map as $tp => $tv): ?>
+                <div class="dash-table-wrap" style="margin-top:16px;">
+                    <table class="dash-table">
+                        <thead>
                             <tr>
-                                <td style="font-weight:600;"><?= htmlspecialchars(Koneksi::periodeLabel($tp)) ?></td>
-                                <td style="text-align:right;"><?= rupiah($tv['target']) ?></td>
-                                <td><?= $tv['keterangan'] !== null ? htmlspecialchars($tv['keterangan']) : '-' ?></td>
-                                <td style="text-align:center;">
-                                    <form method="post" action="" style="display:inline;">
-                                        <?= Koneksi::csrfField() ?>
-                                        <input type="hidden" name="hapus_target" value="<?= htmlspecialchars($tp) ?>">
-                                        <button type="submit" class="btn-outline-custom" style="padding:4px 10px;color:var(--danger);">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
-                                </td>
+                                <th>Bulan</th>
+                                <th style="text-align:right;">Target</th>
+                                <th>Keterangan</th>
+                                <th style="text-align:center;width:80px;">Aksi</th>
                             </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($target_map as $tp => $tv): ?>
+                                <tr>
+                                    <td style="font-weight:600;"><?= htmlspecialchars(Koneksi::periodeLabel($tp)) ?></td>
+                                    <td style="text-align:right;"><span class="dash-amount"><?= rupiah($tv['target']) ?></span></td>
+                                    <td><?= $tv['keterangan'] !== null ? htmlspecialchars($tv['keterangan']) : '-' ?></td>
+                                    <td style="text-align:center;">
+                                        <form method="post" action="" style="display:inline;">
+                                            <?= Koneksi::csrfField() ?>
+                                            <input type="hidden" name="hapus_target" value="<?= htmlspecialchars($tp) ?>">
+                                            <button type="submit" class="dash-btn dash-btn-light" style="padding:6px 12px;color:var(--danger);">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
             <?php endif; ?>
         </div>
     </div>
 
-    <div class="table-container">
-        <div class="table-header">
-            <h6>Bulan: <?= $selected_periode_db !== '' ? htmlspecialchars(Koneksi::periodeLabel($selected_periode_db)) : 'Semua Bulan' ?></h6>
+    <div class="dash-card">
+        <div class="dash-card-head">
+            <div>
+                <div class="dash-card-title">Bulan: <?= $selected_periode_db !== '' ? htmlspecialchars(Koneksi::periodeLabel($selected_periode_db)) : 'Semua Bulan' ?></div>
+                <div class="dash-card-sub"><?= $total_data ?> catatan pembayaran</div>
+            </div>
             <form class="table-search" method="get">
                 <?php if ($selected_periode !== ''): ?>
                     <input type="hidden" name="periode" value="<?= htmlspecialchars($selected_periode) ?>">
@@ -313,8 +322,8 @@ if ($selected_periode_db !== '') {
                 <?php endif; ?>
             </form>
         </div>
-        <div class="table-responsive">
-            <table class="table">
+        <div class="dash-table-wrap">
+            <table class="dash-table">
                 <thead>
                     <tr>
                         <th style="width:60px;">No</th>
@@ -329,8 +338,11 @@ if ($selected_periode_db !== '') {
                 <tbody>
                     <?php if (empty($data)): ?>
                         <tr>
-                            <td colspan="7" style="text-align:center;padding:36px 0;color:var(--text-muted);">
-                                <?= $cari !== '' ? 'Tidak ada pembayaran yang cocok dengan "' . htmlspecialchars($cari) . '"' : 'Belum ada data pembayaran pada bulan ini' ?>
+                            <td colspan="7">
+                                <div class="dash-empty">
+                                    <div class="t"><?= $cari !== '' ? 'Tidak ada hasil untuk "' . htmlspecialchars($cari) . '"' : 'Belum ada data pembayaran' ?></div>
+                                    <div class="s"><?= $cari === '' ? 'Catat pembayaran siswa melalui tombol Tambah' : 'Coba kata kunci lain' ?></div>
+                                </div>
                             </td>
                         </tr>
                     <?php else: ?>
@@ -338,20 +350,24 @@ if ($selected_periode_db !== '') {
                         <?php foreach ($data as $p): ?>
                             <tr>
                                 <td style="color:var(--text-muted);"><?= $no++ ?></td>
-                                <td style="font-weight:600;"><?= htmlspecialchars($p['nama']) ?></td>
-                                <td><?= htmlspecialchars(Koneksi::periodeLabel($p['periode'])) ?></td>
-                                <td>Rp <?= number_format($p['jumlah'], 0, ',', '.') ?></td>
-                                <td style="color:var(--text-secondary);"><?= $p['tanggal_bayar'] ? date('d/m/Y', strtotime($p['tanggal_bayar'])) : '-' ?></td>
                                 <td>
-                                    <?php if ($p['status'] == 'lunas'): ?>
-                                        <span class="text-status lunas">Terkumpul</span>
-                                    <?php else: ?>
-                                        <span class="text-status belum">Belum</span>
-                                    <?php endif; ?>
+                                    <div class="dash-cell-name">
+                                        <div class="dash-cell-avatar" style="background:var(--accent-soft);color:var(--accent);">
+                                            <?= strtoupper(substr($p['nama'], 0, 1)) ?>
+                                        </div>
+                                        <div>
+                                            <span class="nm"><?= htmlspecialchars($p['nama']) ?></span>
+                                            <span class="ab">Absen <?= (int)$p['nomor_absen'] ?></span>
+                                        </div>
+                                    </div>
                                 </td>
+                                <td><?= htmlspecialchars(Koneksi::periodeLabel($p['periode'])) ?></td>
+                                <td><span class="dash-amount"><?= rupiah((float)$p['jumlah']) ?></span></td>
+                                <td style="color:var(--text-secondary);"><?= $p['tanggal_bayar'] ? date('d/m/Y', strtotime($p['tanggal_bayar'])) : '-' ?></td>
+                                <td><?= status_pill($p['status']) ?></td>
                                 <td style="text-align:center;">
-                                    <div style="display:flex;gap:4px;justify-content:center;">
-                                        <button class="btn-outline-custom" style="padding:4px 10px;"
+                                    <div style="display:flex;gap:6px;justify-content:center;">
+                                        <button class="dash-btn dash-btn-light" style="padding:6px 12px;"
                                                 data-bs-toggle="modal" data-bs-target="#modalPembayaran"
                                                 data-id="<?= $p['id'] ?>"
                                                 data-siswa_id="<?= $p['siswa_id'] ?>"
@@ -365,7 +381,7 @@ if ($selected_periode_db !== '') {
                                               onsubmit="return confirmDelete(event, 'Yakin hapus pembayaran <?= htmlspecialchars($p['nama']) ?> bulan <?= htmlspecialchars(Koneksi::periodeLabel($p['periode'])) ?>?')">
                                             <?= Koneksi::csrfField() ?>
                                             <input type="hidden" name="hapus" value="<?= $p['id'] ?>">
-                                            <button type="submit" class="btn-outline-custom" style="padding:4px 10px;color:var(--danger);">
+                                            <button type="submit" class="dash-btn dash-btn-light" style="padding:6px 12px;color:var(--danger);">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </form>
@@ -378,8 +394,8 @@ if ($selected_periode_db !== '') {
             </table>
         </div>
         <?php if ($total_data > 0): ?>
-            <div class="table-pagination">
-                <span class="table-count">
+            <div class="dash-pagination">
+                <span class="dash-pg-info">
                     Menampilkan <?= $start_item ?>–<?= $end_item ?> dari <?= $total_data ?> data
                 </span>
                 <?php include '../partials/pagination.php'; ?>
@@ -411,7 +427,7 @@ if ($selected_periode_db !== '') {
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Periode</label>
+                        <label class="form-label">Bulan</label>
                         <input type="month" class="form-control" name="periode" id="periode" required>
                     </div>
                     <div class="mb-3">
@@ -431,8 +447,8 @@ if ($selected_periode_db !== '') {
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn-outline-custom" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn-primary-custom">Simpan</button>
+                    <button type="button" class="dash-btn dash-btn-light" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="dash-btn dash-btn-primary">Simpan</button>
                 </div>
             </form>
         </div>

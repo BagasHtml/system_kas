@@ -20,7 +20,7 @@ include '../partials/header.php';
             <p>Kelola pembayaran, siswa, dan pengeluaran kas kelas dalam satu panel yang rapi dan transparan.</p>
         </div>
         <ul class="auth-visual-list">
-            <li><i class="bi bi-check2-circle"></i> Catat pembayaran kas per periode</li>
+            <li><i class="bi bi-check2-circle"></i> Catat pembayaran kas per bulan</li>
             <li><i class="bi bi-check2-circle"></i> Pantau saldo dan pengeluaran kelas</li>
             <li><i class="bi bi-check2-circle"></i> Cetak laporan kapan saja</li>
         </ul>

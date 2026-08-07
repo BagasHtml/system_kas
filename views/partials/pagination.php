@@ -27,17 +27,17 @@ for ($i = 1; $i <= $total_pages; $i++) {
     }
 }
 ?>
-<div class="table-pagination">
-    <span class="table-pg-info">Halaman <?= $page ?> dari <?= $total_pages ?></span>
-    <div class="table-pg-nav">
-        <a class="table-pg-btn <?= $page <= 1 ? 'disabled' : '' ?>" href="<?= $href(max(1, $page - 1)) ?>">Sebelumnya</a>
+<div class="dash-pagination">
+    <span class="dash-pg-info">Halaman <?= $page ?> dari <?= $total_pages ?></span>
+    <div class="dash-pg-nav">
+        <a class="dash-pg-btn <?= $page <= 1 ? 'disabled' : '' ?>" href="<?= $href(max(1, $page - 1)) ?>">Sebelumnya</a>
         <?php foreach ($links as $pg): ?>
             <?php if ($pg === '...'): ?>
-                <span class="table-pg-ellipsis">…</span>
+                <span class="dash-pg-ellipsis">…</span>
             <?php else: ?>
-                <a class="table-pg-btn <?= $pg === $page ? 'active' : '' ?>" href="<?= $href($pg) ?>"><?= $pg ?></a>
+                <a class="dash-pg-btn <?= $pg === $page ? 'active' : '' ?>" href="<?= $href($pg) ?>"><?= $pg ?></a>
             <?php endif; ?>
         <?php endforeach; ?>
-        <a class="table-pg-btn <?= $page >= $total_pages ? 'disabled' : '' ?>" href="<?= $href(min($total_pages, $page + 1)) ?>">Berikutnya</a>
+        <a class="dash-pg-btn <?= $page >= $total_pages ? 'disabled' : '' ?>" href="<?= $href(min($total_pages, $page + 1)) ?>">Berikutnya</a>
     </div>
 </div>
