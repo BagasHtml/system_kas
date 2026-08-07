@@ -1,5 +1,9 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) session_start();
+if (!isset($_SESSION['username'])) {
+    header("Location: login.php");
+    exit;
+}
 $title = 'Dashboard - Admin';
 $active = 'dashboard';
 include '../partials/header.php';
@@ -29,8 +33,18 @@ $pengeluaran_total = (float)$keluar['t'];
 $pengeluaran_count = (int)$keluar['c'];
 
 $saldo = $pemasukan - $pengeluaran_total;
-$total_tagihan = $pemasukan + $belum;
-$pct_lunas = $total_tagihan > 0 ? round($pemasukan / $total_tagihan * 100) : 0;
+
+/* Target kas (kesepakatan kelas): "Belum Terkumpul" jadi sisa target bila target ada. */
+$target_map = Koneksi::targetMap();
+$total_target = Koneksi::totalTarget($target_map);
+$ada_target = $total_target > 0;
+if ($ada_target) {
+    $belum = max(0, $total_target - $pemasukan);
+}
+
+$pct_lunas = $ada_target
+    ? min(100, round($pemasukan / $total_target * 100))
+    : min(100, round($pemasukan / max(1, $pemasukan + $belum) * 100));
 $rata_rata = $total_siswa > 0 ? round($pemasukan / $total_siswa) : 0;
 
 $recent = $db::q(
@@ -57,7 +71,7 @@ $bulan = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 
 $username = htmlspecialchars($_SESSION['username'] ?? 'Admin');
 
 $kpis = [
-    ['label' => 'Total Pemasukan', 'value' => rupiah($pemasukan), 'note' => $lunas_count . ' catatan lunas', 'tone' => 'success'],
+    ['label' => 'Total Pemasukan', 'value' => rupiah($pemasukan), 'note' => $lunas_count . ' catatan terkumpul', 'tone' => 'success'],
     ['label' => 'Total Siswa', 'value' => (string)$total_siswa, 'tone' => 'info'],
     ['label' => 'Total Pengeluaran', 'value' => rupiah($pengeluaran_total), 'note' => $pengeluaran_count . ' transaksi', 'tone' => 'warn'],
     ['label' => 'Saldo Kas', 'value' => rupiah($saldo), 'tone' => 'accent'],
@@ -90,7 +104,7 @@ $kpis = [
             <div class="dash-card-head">
                 <div>
                     <div class="dash-card-title">Pemasukan per Bulan</div>
-                    <div class="dash-card-sub">Total pembayaran lunas tahun <?= date('Y') ?></div>
+                    <div class="dash-card-sub">Total kas terkumpul tahun <?= date('Y') ?></div>
                 </div>
                 <span class="dash-year-label">Tahun <?= date('Y') ?></span>
             </div>
@@ -126,7 +140,7 @@ $kpis = [
             <div class="dash-card-head">
                 <div>
                     <div class="dash-card-title">Status Pembayaran</div>
-                    <div class="dash-card-sub">Perbandingan nominal kas</div>
+                    <div class="dash-card-sub"><?= $ada_target ? 'Perbandingan terhadap target kas kelas' : 'Perbandingan nominal kas' ?></div>
                 </div>
             </div>
 
@@ -139,12 +153,12 @@ $kpis = [
                 <div class="dash-legend">
                     <div class="dash-legend-item">
                         <span class="sw" style="background:var(--accent);"></span>
-                        <span class="name">Lunas<span class="sub"><?= $lunas_count ?> periode</span></span>
+                        <span class="name">Terkumpul<span class="sub"><?= $lunas_count ?> bulan</span></span>
                         <span class="val"><?= rupiah($pemasukan) ?></span>
                     </div>
                     <div class="dash-legend-item">
                         <span class="sw" style="background:#d9a241;"></span>
-                        <span class="name">Belum<span class="sub"><?= $belum_count ?> periode</span></span>
+                        <span class="name">Belum Terkumpul<span class="sub"><?= $ada_target ? 'sisa target' : $belum_count . ' bulan' ?></span></span>
                         <span class="val"><?= rupiah($belum) ?></span>
                     </div>
                 </div>
@@ -185,7 +199,7 @@ $kpis = [
                         <thead>
                             <tr>
                                 <th>Siswa</th>
-                                <th>Periode</th>
+                                <th>Bulan</th>
                                 <th>Tanggal</th>
                                 <th>Status</th>
                                 <th style="text-align:right;">Jumlah</th>
@@ -205,7 +219,7 @@ $kpis = [
                                             </div>
                                         </div>
                                     </td>
-                                    <td><?= htmlspecialchars($p['periode']) ?></td>
+                                    <td><?= htmlspecialchars(Koneksi::periodeLabel($p['periode'])) ?></td>
                                     <td><?= $p['tanggal_bayar'] ? date('d/m/Y', strtotime($p['tanggal_bayar'])) : '-' ?></td>
                                     <td><?= status_pill($p['status']) ?></td>
                                     <td style="text-align:right;"><span class="dash-amount"><?= rupiah((float)$p['jumlah']) ?></span></td>
@@ -246,6 +260,10 @@ $kpis = [
                 <div style="display:flex;justify-content:space-between;align-items:center;">
                     <span style="color:var(--text-secondary);">Total Pemasukan</span>
                     <span style="font-weight:700;color:var(--success);"><?= rupiah($pemasukan) ?></span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <span style="color:var(--text-secondary);">Kesepakatan Kas Kelas</span>
+                    <span style="font-weight:700;"><?= $ada_target ? rupiah($total_target) : 'Belum ditetapkan' ?></span>
                 </div>
                 <div style="display:flex;justify-content:space-between;align-items:center;">
                     <span style="color:var(--text-secondary);">Total Pengeluaran</span>

@@ -9,35 +9,16 @@ $title = 'Pembayaran - Admin';
 $active = 'pembayaran';
 include '../partials/header.php';
 include '../partials/admin_sidebar.php';
+include '../partials/helpers.php';
 include_once '../../database/db.php';
 
 $db = new Koneksi();
 
-$bulan_id = [
-    1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
-    5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
-    9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
-];
-$bulan_rev = array_flip($bulan_id);
-
-function periodeKeYm(string $periode, array $bulan_rev): string
-{
-    $parts = explode(' ', trim($periode));
-    if (count($parts) === 2 && isset($bulan_rev[$parts[0]]) && ctype_digit($parts[1])) {
-        return $parts[1] . '-' . str_pad((string)$bulan_rev[$parts[0]], 2, '0', STR_PAD_LEFT);
-    }
-    return '';
-}
-
 $selected_periode = $_GET['periode'] ?? '';
 $cari = trim($_GET['cari'] ?? '');
 $selected_periode_db = '';
-if (preg_match('/^\d{4}-\d{2}$/', $selected_periode)) {
-    $t = explode('-', $selected_periode);
-    $bln = (int)$t[1];
-    if ($bln >= 1 && $bln <= 12) {
-        $selected_periode_db = $bulan_id[$bln] . ' ' . $t[0];
-    }
+if (preg_match('/^(\d{4})-(\d{2})$/', $selected_periode, $m) && (int)$m[2] >= 1 && (int)$m[2] <= 12) {
+    $selected_periode_db = $selected_periode;
 }
 
 $back_parts = [];
@@ -46,8 +27,13 @@ if ($cari !== '') $back_parts['cari'] = $cari;
 $back = $back_parts ? '?' . http_build_query($back_parts) : '';
 
 /* ===== HAPUS ===== */
-if (isset($_GET['hapus'])) {
-    $id = (int)$_GET['hapus'];
+if (isset($_POST['hapus'])) {
+    if (!Koneksi::csrfCheck()) {
+        Koneksi::setFlash('error', 'Token keamanan tidak valid. Muat ulang halaman lalu coba lagi.');
+        header("Location: pembayaran.php" . $back);
+        exit;
+    }
+    $id = (int)$_POST['hapus'];
     if ($id > 0) {
         $db::q("DELETE FROM pembayaran WHERE id = ?", [$id]);
         Koneksi::setFlash('success', 'Data pembayaran berhasil dihapus.');
@@ -56,8 +42,56 @@ if (isset($_GET['hapus'])) {
     exit;
 }
 
+/* ===== TARGET KAS (kesepakatan kelas) ===== */
+if (isset($_POST['simpan_target'])) {
+    if (!Koneksi::csrfCheck()) {
+        Koneksi::setFlash('error', 'Token keamanan tidak valid. Muat ulang halaman lalu coba lagi.');
+        header("Location: pembayaran.php" . $back);
+        exit;
+    }
+    $t_periode = trim($_POST['t_periode'] ?? '');
+    $t_target  = (float)($_POST['t_target'] ?? 0);
+    $t_keterangan = trim($_POST['t_keterangan'] ?? '');
+    $t_valid = preg_match('/^(\d{4})-(\d{2})$/', $t_periode, $tm) && (int)$tm[2] >= 1 && (int)$tm[2] <= 12;
+
+    if (!$t_valid || $t_target <= 0) {
+        Koneksi::setFlash('error', 'Isi bulan dan target yang valid.');
+        header("Location: pembayaran.php" . $back);
+        exit;
+    }
+
+    $db::q(
+        "INSERT INTO target_kas (periode, target, keterangan) VALUES (?, ?, ?)
+         ON DUPLICATE KEY UPDATE target = ?, keterangan = ?",
+        [$t_periode, $t_target, $t_keterangan !== '' ? $t_keterangan : null, $t_target, $t_keterangan !== '' ? $t_keterangan : null]
+    );
+    Koneksi::setFlash('success', 'Target kas untuk ' . Koneksi::periodeLabel($t_periode) . ' disimpan.');
+    header("Location: pembayaran.php" . $back);
+    exit;
+}
+
+if (isset($_POST['hapus_target'])) {
+    if (!Koneksi::csrfCheck()) {
+        Koneksi::setFlash('error', 'Token keamanan tidak valid. Muat ulang halaman lalu coba lagi.');
+        header("Location: pembayaran.php" . $back);
+        exit;
+    }
+    $t_periode = trim($_POST['hapus_target'] ?? '');
+    if (preg_match('/^\d{4}-\d{2}$/', $t_periode)) {
+        $db::q("DELETE FROM target_kas WHERE periode = ?", [$t_periode]);
+        Koneksi::setFlash('success', 'Target ' . Koneksi::periodeLabel($t_periode) . ' dihapus.');
+    }
+    header("Location: pembayaran.php" . $back);
+    exit;
+}
+
 /* ===== TAMBAH / EDIT ===== */
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
+    if (!Koneksi::csrfCheck()) {
+        Koneksi::setFlash('error', 'Token keamanan tidak valid. Muat ulang halaman lalu coba lagi.');
+        header("Location: pembayaran.php" . $back);
+        exit;
+    }
     $id        = (int)($_POST['id'] ?? 0);
     $siswa_id  = (int)($_POST['siswa_id'] ?? 0);
     $periode   = trim($_POST['periode'] ?? '');
@@ -66,14 +100,15 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     $tanggal   = trim($_POST['tanggal_bayar'] ?? '');
     $tanggal   = $tanggal !== '' ? $tanggal : null;
 
-    if ($siswa_id <= 0 || !preg_match('/^\d{4}-\d{2}$/', $periode) || $jumlah <= 0) {
-        Koneksi::setFlash('error', 'Data tidak lengkap: pilih siswa, periode, dan jumlah yang valid.');
+    $periode_valid = preg_match('/^(\d{4})-(\d{2})$/', $periode, $pm) && (int)$pm[2] >= 1 && (int)$pm[2] <= 12;
+
+    if ($siswa_id <= 0 || !$periode_valid || $jumlah <= 0) {
+        Koneksi::setFlash('error', 'Data tidak lengkap: pilih siswa, bulan, dan jumlah yang valid.');
         header("Location: pembayaran.php" . $back);
         exit;
     }
 
-    [$thn, $bln] = explode('-', $periode);
-    $periode_db = $bulan_id[(int)$bln] . ' ' . $thn;
+    $periode_db = $periode;
 
     if ($status === 'lunas' && $tanggal === null) {
         $tanggal = date('Y-m-d');
@@ -88,7 +123,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     } else {
         $dup = $db::q("SELECT id FROM pembayaran WHERE siswa_id = ? AND periode = ? LIMIT 1", [$siswa_id, $periode_db]);
         if ($dup && $dup->num_rows > 0) {
-            Koneksi::setFlash('error', 'Siswa tersebut sudah tercatat pada periode ' . $periode_db . '.');
+            Koneksi::setFlash('error', 'Siswa tersebut sudah tercatat pada bulan ' . Koneksi::periodeLabel($periode_db) . '.');
             header("Location: pembayaran.php" . $back);
             exit;
         }
@@ -102,7 +137,6 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     exit;
 }
 
-/* ===== TAMPIL ===== */
 $per_page = 10;
 $page = max(1, (int)($_GET['hal'] ?? 1));
 
@@ -146,13 +180,28 @@ $pg_query = http_build_query($pg_parts);
 
 $resSiswa = $db::q("SELECT id, nama, nomor_absen FROM siswa ORDER BY nomor_absen ASC");
 $daftar_siswa = $resSiswa ? $resSiswa->fetch_all(MYSQLI_ASSOC) : [];
+
+$target_map = Koneksi::targetMap();
+
+$period_collected = 0.0;
+$period_target = null;
+if ($selected_periode_db !== '') {
+    $aggP = $db::q(
+        "SELECT COALESCE(SUM(CASE WHEN status = 'lunas' THEN jumlah END), 0) AS t FROM pembayaran WHERE periode = ?",
+        [$selected_periode_db]
+    )->fetch_assoc();
+    $period_collected = (float)($aggP['t'] ?? 0);
+    if (isset($target_map[$selected_periode_db])) {
+        $period_target = $target_map[$selected_periode_db]['target'];
+    }
+}
 ?>
 
 <div class="main-content">
     <div class="page-header">
         <div>
             <h4>Pembayaran Kas</h4>
-            <div class="sub">Kelola status pembayaran kas per periode</div>
+            <div class="sub">Kelola status pembayaran kas per bulan</div>
         </div>
         <div style="display:flex;gap:8px;">
             <form action="" method="GET">
@@ -169,14 +218,95 @@ $daftar_siswa = $resSiswa ? $resSiswa->fetch_all(MYSQLI_ASSOC) : [];
 
     <?php Koneksi::renderFlash(); ?>
 
+    <div class="table-container" style="margin-bottom:16px;">
+        <div class="table-header">
+            <h6>Target Kas Kelas</h6>
+            <span style="font-size:11px;color:var(--text-secondary);">Besaran kas yang disepakati kelas untuk tiap bulan</span>
+        </div>
+        <div style="padding:16px;">
+            <form method="post" action="" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+                <?= Koneksi::csrfField() ?>
+                <div>
+                    <label class="form-label">Bulan</label>
+                    <input type="month" class="form-control" name="t_periode"
+                           value="<?= htmlspecialchars($selected_periode_db) ?>" style="min-width:150px;" required>
+                </div>
+                <div>
+                    <label class="form-label">Target (Rp)</label>
+                    <input type="number" class="form-control" name="t_target" min="1" step="500"
+                           placeholder="mis. 50000" style="min-width:130px;" required>
+                </div>
+                <div style="flex:1;min-width:180px;">
+                    <label class="form-label">Keterangan (opsional)</label>
+                    <input type="text" class="form-control" name="t_keterangan" placeholder="mis. disepakati rapat kelas">
+                </div>
+                <button type="submit" name="simpan_target" value="1" class="btn-primary-custom">Simpan Target</button>
+            </form>
+
+            <?php if ($period_target !== null): ?>
+                <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;font-size:12px;margin-bottom:6px;">
+                        <span>Target <?= htmlspecialchars(Koneksi::periodeLabel($selected_periode_db)) ?></span>
+                        <span>
+                            <b>Terkumpul <?= rupiah($period_collected) ?></b>
+                            dari <?= rupiah($period_target) ?>
+                            (<?= min(100, round($period_collected / $period_target * 100)) ?>%)
+                        </span>
+                    </div>
+                    <div class="target-track">
+                        <div class="target-fill" style="width:<?= min(100, round($period_collected / $period_target * 100)) ?>%"></div>
+                    </div>
+                    <?php if ($period_collected >= $period_target): ?>
+                        <div style="margin-top:6px;font-size:12px;color:var(--success);font-weight:600;">Target bulan ini tercapai.</div>
+                    <?php else: ?>
+                        <div style="margin-top:6px;font-size:12px;color:var(--text-secondary);">
+                            Tersisa <?= rupiah(max(0, $period_target - $period_collected)) ?> menuju target kelas.
+                        </div>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
+
+            <?php if ($target_map): ?>
+                <table class="table" style="margin-top:14px;">
+                    <thead>
+                        <tr>
+                            <th>Bulan</th>
+                            <th style="text-align:right;">Target</th>
+                            <th>Keterangan</th>
+                            <th style="text-align:center;width:80px;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($target_map as $tp => $tv): ?>
+                            <tr>
+                                <td style="font-weight:600;"><?= htmlspecialchars(Koneksi::periodeLabel($tp)) ?></td>
+                                <td style="text-align:right;"><?= rupiah($tv['target']) ?></td>
+                                <td><?= $tv['keterangan'] !== null ? htmlspecialchars($tv['keterangan']) : '-' ?></td>
+                                <td style="text-align:center;">
+                                    <form method="post" action="" style="display:inline;">
+                                        <?= Koneksi::csrfField() ?>
+                                        <input type="hidden" name="hapus_target" value="<?= htmlspecialchars($tp) ?>">
+                                        <button type="submit" class="btn-outline-custom" style="padding:4px 10px;color:var(--danger);">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php endif; ?>
+        </div>
+    </div>
+
     <div class="table-container">
         <div class="table-header">
-            <h6>Periode: <?= $selected_periode_db !== '' ? htmlspecialchars($selected_periode_db) : 'Semua Periode' ?></h6>
+            <h6>Bulan: <?= $selected_periode_db !== '' ? htmlspecialchars(Koneksi::periodeLabel($selected_periode_db)) : 'Semua Bulan' ?></h6>
             <form class="table-search" method="get">
                 <?php if ($selected_periode !== ''): ?>
                     <input type="hidden" name="periode" value="<?= htmlspecialchars($selected_periode) ?>">
                 <?php endif; ?>
-                <input type="search" name="cari" value="<?= htmlspecialchars($cari) ?>" placeholder="Cari nama atau periode">
+                <input type="search" name="cari" value="<?= htmlspecialchars($cari) ?>" placeholder="Cari nama atau bulan">
                 <button type="submit">Cari</button>
                 <?php if ($cari !== ''): ?>
                     <a class="table-search-clear" href="?<?= $selected_periode !== '' ? 'periode=' . urlencode($selected_periode) : '' ?>" title="Reset">×</a>
@@ -189,7 +319,7 @@ $daftar_siswa = $resSiswa ? $resSiswa->fetch_all(MYSQLI_ASSOC) : [];
                     <tr>
                         <th style="width:60px;">No</th>
                         <th>Nama Siswa</th>
-                        <th>Periode</th>
+                        <th>Bulan</th>
                         <th>Jumlah</th>
                         <th>Tanggal Bayar</th>
                         <th>Status</th>
@@ -200,7 +330,7 @@ $daftar_siswa = $resSiswa ? $resSiswa->fetch_all(MYSQLI_ASSOC) : [];
                     <?php if (empty($data)): ?>
                         <tr>
                             <td colspan="7" style="text-align:center;padding:36px 0;color:var(--text-muted);">
-                                <?= $cari !== '' ? 'Tidak ada pembayaran yang cocok dengan "' . htmlspecialchars($cari) . '"' : 'Belum ada data pembayaran pada periode ini' ?>
+                                <?= $cari !== '' ? 'Tidak ada pembayaran yang cocok dengan "' . htmlspecialchars($cari) . '"' : 'Belum ada data pembayaran pada bulan ini' ?>
                             </td>
                         </tr>
                     <?php else: ?>
@@ -209,12 +339,12 @@ $daftar_siswa = $resSiswa ? $resSiswa->fetch_all(MYSQLI_ASSOC) : [];
                             <tr>
                                 <td style="color:var(--text-muted);"><?= $no++ ?></td>
                                 <td style="font-weight:600;"><?= htmlspecialchars($p['nama']) ?></td>
-                                <td><?= htmlspecialchars($p['periode']) ?></td>
+                                <td><?= htmlspecialchars(Koneksi::periodeLabel($p['periode'])) ?></td>
                                 <td>Rp <?= number_format($p['jumlah'], 0, ',', '.') ?></td>
                                 <td style="color:var(--text-secondary);"><?= $p['tanggal_bayar'] ? date('d/m/Y', strtotime($p['tanggal_bayar'])) : '-' ?></td>
                                 <td>
                                     <?php if ($p['status'] == 'lunas'): ?>
-                                        <span class="text-status lunas">Lunas</span>
+                                        <span class="text-status lunas">Terkumpul</span>
                                     <?php else: ?>
                                         <span class="text-status belum">Belum</span>
                                     <?php endif; ?>
@@ -225,17 +355,20 @@ $daftar_siswa = $resSiswa ? $resSiswa->fetch_all(MYSQLI_ASSOC) : [];
                                                 data-bs-toggle="modal" data-bs-target="#modalPembayaran"
                                                 data-id="<?= $p['id'] ?>"
                                                 data-siswa_id="<?= $p['siswa_id'] ?>"
-                                                data-periode="<?= htmlspecialchars(periodeKeYm($p['periode'], $bulan_rev)) ?>"
+                                                data-periode="<?= htmlspecialchars($p['periode']) ?>"
                                                 data-jumlah="<?= $p['jumlah'] ?>"
                                                 data-status="<?= $p['status'] ?>"
                                                 data-tanggal="<?= $p['tanggal_bayar'] ?? '' ?>">
                                             <i class="bi bi-pencil"></i>
                                         </button>
-                                        <a href="?hapus=<?= $p['id'] ?><?= $back !== '' ? '&' . ltrim($back, '?') : '' ?>"
-                                           class="btn-outline-custom" style="padding:4px 10px;color:var(--danger);"
-                                           onclick="return confirmDelete(event, 'Yakin hapus pembayaran <?= htmlspecialchars($p['nama']) ?> periode <?= htmlspecialchars($p['periode']) ?>?')">
-                                            <i class="bi bi-trash"></i>
-                                        </a>
+                                        <form method="post" action="pembayaran.php<?= $back ?>" style="display:inline;"
+                                              onsubmit="return confirmDelete(event, 'Yakin hapus pembayaran <?= htmlspecialchars($p['nama']) ?> bulan <?= htmlspecialchars(Koneksi::periodeLabel($p['periode'])) ?>?')">
+                                            <?= Koneksi::csrfField() ?>
+                                            <input type="hidden" name="hapus" value="<?= $p['id'] ?>">
+                                            <button type="submit" class="btn-outline-custom" style="padding:4px 10px;color:var(--danger);">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
                                     </div>
                                 </td>
                             </tr>
@@ -259,6 +392,7 @@ $daftar_siswa = $resSiswa ? $resSiswa->fetch_all(MYSQLI_ASSOC) : [];
     <div class="modal-dialog">
         <div class="modal-content">
             <form action="" method="POST">
+                <?= Koneksi::csrfField() ?>
                 <input type="hidden" name="id" id="edit_id">
                 <div class="modal-header">
                     <h6 class="modal-title" id="modalTitle">Tambah Pembayaran</h6>
@@ -287,8 +421,8 @@ $daftar_siswa = $resSiswa ? $resSiswa->fetch_all(MYSQLI_ASSOC) : [];
                     <div class="mb-3">
                         <label class="form-label">Status</label>
                         <select class="form-select" name="status" id="status" onchange="toggleTanggal()">
-                            <option value="belum">Belum Lunas</option>
-                            <option value="lunas">Lunas</option>
+                            <option value="belum">Belum Terkumpul</option>
+                            <option value="lunas">Terkumpul</option>
                         </select>
                     </div>
                     <div class="mb-3">

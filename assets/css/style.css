@@ -1816,6 +1816,21 @@ body {
     transition: width 0.4s;
 }
 
+/* ---- Target Kas ---- */
+.target-track {
+    height: 8px;
+    border-radius: 6px;
+    background: #e9e6df;
+    overflow: hidden;
+}
+
+.target-fill {
+    height: 100%;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #2f6b52, #3b7a5f);
+    transition: width 0.4s;
+}
+
 /* ---- Table ---- */
 .dash-table {
     width: 100%;
@@ -2122,7 +2137,12 @@ body {
 .lp-nav-links a:hover { color: var(--text-primary); background: rgba(46, 43, 39, 0.04); }
 
 .lp-container { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
-.lp-section { padding: 88px 0; scroll-margin-top: 84px; }
+.lp-section {
+    padding: 88px 0;
+    scroll-margin-top: 84px;
+    content-visibility: auto;
+    contain-intrinsic-size: auto 700px;
+}
 
 .lp-hero {
     position: relative;
@@ -2317,6 +2337,8 @@ body {
     overflow: hidden;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     transition: border-color 0.15s, box-shadow 0.15s;
+    content-visibility: auto;
+    contain-intrinsic-size: auto 720px;
 }
 
 .preview:hover {

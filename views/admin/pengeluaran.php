@@ -17,8 +17,13 @@ $cari = trim($_GET['cari'] ?? '');
 $back = $cari !== '' ? '?cari=' . urlencode($cari) : '';
 
 /* ===== HAPUS ===== */
-if (isset($_GET['hapus'])) {
-    $id = (int)$_GET['hapus'];
+if (isset($_POST['hapus'])) {
+    if (!Koneksi::csrfCheck()) {
+        Koneksi::setFlash('error', 'Token keamanan tidak valid. Muat ulang halaman lalu coba lagi.');
+        header("Location: pengeluaran.php" . $back);
+        exit;
+    }
+    $id = (int)$_POST['hapus'];
     if ($id > 0) {
         $db::q("DELETE FROM pengeluaran WHERE id = ?", [$id]);
         Koneksi::setFlash('success', 'Data pengeluaran berhasil dihapus.');
@@ -29,6 +34,11 @@ if (isset($_GET['hapus'])) {
 
 /* ===== TAMBAH / EDIT ===== */
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
+    if (!Koneksi::csrfCheck()) {
+        Koneksi::setFlash('error', 'Token keamanan tidak valid. Muat ulang halaman lalu coba lagi.');
+        header("Location: pengeluaran.php" . $back);
+        exit;
+    }
     $id         = (int)($_POST['id'] ?? 0);
     $tanggal    = trim($_POST['tanggal'] ?? '');
     $keterangan = trim($_POST['keterangan'] ?? '');
@@ -143,11 +153,14 @@ $pg_query = http_build_query(['cari' => $cari]);
                                                 data-tanggal="<?= $p['tanggal'] ?>">
                                             <i class="bi bi-pencil"></i>
                                         </button>
-                                        <a href="?hapus=<?= $p['id'] ?><?= $cari !== '' ? '&cari=' . urlencode($cari) : '' ?>"
-                                           class="btn-outline-custom" style="padding:4px 10px;color:var(--danger);"
-                                           onclick="return confirmDelete(event, 'Yakin hapus pengeluaran ini?')">
-                                            <i class="bi bi-trash"></i>
-                                        </a>
+                                        <form method="post" action="pengeluaran.php<?= $back ?>" style="display:inline;"
+                                              onsubmit="return confirmDelete(event, 'Yakin hapus pengeluaran ini?')">
+                                            <?= Koneksi::csrfField() ?>
+                                            <input type="hidden" name="hapus" value="<?= $p['id'] ?>">
+                                            <button type="submit" class="btn-outline-custom" style="padding:4px 10px;color:var(--danger);">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
                                     </div>
                                 </td>
                             </tr>
@@ -171,6 +184,7 @@ $pg_query = http_build_query(['cari' => $cari]);
     <div class="modal-dialog">
         <div class="modal-content">
             <form action="" method="POST">
+                <?= Koneksi::csrfField() ?>
                 <input type="hidden" name="id" id="edit_id">
                 <div class="modal-header">
                     <h6 class="modal-title" id="modalTitle">Tambah Pengeluaran</h6>

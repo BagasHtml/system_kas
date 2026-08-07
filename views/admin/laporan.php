@@ -45,17 +45,13 @@ $pengeluaran_total = $resOut ? (float)$resOut->fetch_assoc()['total'] : 0;
 
 $saldo = (float)$sum['pemasukan'] - $pengeluaran_total;
 
-$bulan_pendek = function ($periode) {
-    $nama = explode(' ', trim($periode));
-    $pendek = [
-        'Januari' => 'Jan', 'Februari' => 'Feb', 'Maret' => 'Mar', 'April' => 'Apr',
-        'Mei' => 'Mei', 'Juni' => 'Jun', 'Juli' => 'Jul', 'Agustus' => 'Ags',
-        'September' => 'Sep', 'Oktober' => 'Okt', 'November' => 'Nov', 'Desember' => 'Des'
-    ];
-    $b = isset($pendek[$nama[0]]) ? $pendek[$nama[0]] : ($nama[0] ?? '');
-    $t = $nama[1] ?? '';
-    return trim($b . ' ' . $t);
-};
+/* Target kas (kesepakatan kelas): sisa target bila target sudah ditetapkan. */
+$target_map = Koneksi::targetMap();
+$total_target = Koneksi::totalTarget($target_map);
+$ada_target = $total_target > 0;
+$belum_bayar = $ada_target
+    ? max(0, $total_target - (float)$sum['pemasukan'])
+    : (float)$sum['belum_bayar'];
 ?>
 
 <div class="main-content">
@@ -72,10 +68,11 @@ $bulan_pendek = function ($periode) {
     <div class="dash-kpis" style="margin-bottom:20px;">
         <?php
         $kpis = [
-            ['label' => 'Pemasukan (Lunas)', 'value' => rupiah((float)$sum['pemasukan']), 'tone' => 'success'],
+            ['label' => 'Pemasukan (Terkumpul)', 'value' => rupiah((float)$sum['pemasukan']), 'tone' => 'success'],
             ['label' => 'Pengeluaran', 'value' => rupiah($pengeluaran_total), 'tone' => 'danger'],
             ['label' => 'Saldo Kas', 'value' => rupiah($saldo), 'tone' => 'accent'],
-            ['label' => 'Belum Dibayar', 'value' => rupiah((float)$sum['belum_bayar']), 'tone' => 'warn'],
+            ['label' => 'Belum Terkumpul', 'value' => rupiah($belum_bayar), 'tone' => 'warn'],
+            ['label' => 'Target Kas', 'value' => rupiah($total_target), 'tone' => 'info'],
         ];
         foreach ($kpis as $k) {
             echo kpi($k);
@@ -99,7 +96,7 @@ $bulan_pendek = function ($periode) {
                         <th style="width:44px;">No</th>
                         <th>Nama Siswa</th>
                         <?php foreach ($periode_list as $per): ?>
-                            <th style="text-align:center;"><?= htmlspecialchars($bulan_pendek($per)) ?></th>
+                            <th style="text-align:center;"><?= htmlspecialchars(Koneksi::periodeShortLabel($per)) ?></th>
                         <?php endforeach; ?>
                     </tr>
                 </thead>
@@ -121,9 +118,9 @@ $bulan_pendek = function ($periode) {
                                     <td style="text-align:center;">
                                         <?php $st = $map[$s['id']][$per] ?? 'belum'; ?>
                                         <?php if ($st === 'lunas'): ?>
-                                            <span class="lap-cell-lunas"><i class="bi bi-check-circle-fill"></i> Lunas</span>
+                                            <span class="lap-cell-lunas"><i class="bi bi-check-circle-fill"></i> Terkumpul</span>
                                         <?php else: ?>
-                                            <span class="lap-cell-belum"><i class="bi bi-x-circle-fill"></i> Belum</span>
+                                            <span class="lap-cell-belum"><i class="bi bi-x-circle-fill"></i> Belum Terkumpul</span>
                                         <?php endif; ?>
                                     </td>
                                 <?php endforeach; ?>

@@ -34,11 +34,39 @@ foreach ($pembayaran as $p) {
 $grand = $lunas + $belum;
 $pct_lunas = $grand > 0 ? round($lunas / $grand * 100) : 0;
 
+/* Target kas kelas (kesepakatan kelas, diatur bendahara). */
+$target_map = Koneksi::targetMap();
+$total_target = Koneksi::totalTarget($target_map);
+$ada_target = $total_target > 0;
+$kelas_collected = 0.0;
+$kelas_remainder = 0.0;
+if ($ada_target) {
+    $kc = $db::q("SELECT COALESCE(SUM(jumlah), 0) t FROM pembayaran WHERE status = 'lunas'")->fetch_assoc();
+    $kelas_collected = (float)($kc['t'] ?? 0);
+    $kelas_remainder = max(0, $total_target - $kelas_collected);
+}
+$pct_kelas = $ada_target ? min(100, round($kelas_collected / $total_target * 100)) : 0;
+
+if ($ada_target) {
+    $kpi_belum = [
+        'label' => 'Belum Terkumpul',
+        'value' => rupiah($kelas_remainder),
+        'note' => $kelas_remainder <= 0 ? 'target kelas tercapai' : 'tersisa ' . rupiah($total_target) . ' menuju target kelas',
+        'tone' => $kelas_remainder <= 0 ? 'success' : 'danger',
+    ];
+} else {
+    $kpi_belum = [
+        'label' => 'Belum Terkumpul',
+        'value' => rupiah($belum),
+        'note' => $belum > 0 ? 'pembayaranmu yang belum tercatat' : 'semua sudah terkumpul',
+        'tone' => $belum > 0 ? 'danger' : 'success',
+    ];
+}
+
 $kpis = [
     ['label' => 'Total Dibayar', 'value' => rupiah($lunas), 'note' => $periode_lunas . ' periode', 'tone' => 'success'],
-    ['label' => 'Sisa Tunggakan', 'value' => rupiah($belum), 'tone' => 'danger'],
-    ['label' => 'Periode Lunas', 'value' => (string)$periode_lunas, 'tone' => 'info'],
-    ['label' => 'Tingkat Kelunasan', 'value' => $pct_lunas . '%', 'tone' => 'accent'],
+    $kpi_belum,
+    ['label' => 'Periode Terkumpul', 'value' => (string)$periode_lunas, 'tone' => 'info'],
 ];
 ?>
 
@@ -104,6 +132,57 @@ $kpis = [
         </div>
     </div>
 
+    <div class="dash-card">
+        <div class="dash-card-head">
+            <div>
+                <div class="dash-card-title">Target Kas Kelas</div>
+                <div class="dash-card-sub">Besaran kas yang disepakati kelas bersama</div>
+            </div>
+        </div>
+
+        <?php if (!$ada_target): ?>
+            <div class="dash-empty">
+                <div class="t">Target belum ditetapkan</div>
+                <div class="s">Bendahara belum menetapkan target kas untuk kelas</div>
+            </div>
+        <?php else: ?>
+            <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <span style="color:var(--text-secondary);">Kesepakatan kelas</span>
+                    <span style="font-weight:700;"><?= rupiah($total_target) ?></span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <span style="color:var(--text-secondary);">Terkumpul</span>
+                    <span style="font-weight:700;color:var(--success);"><?= rupiah($kelas_collected) ?></span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <span style="color:var(--text-secondary);">Belum terkumpul</span>
+                    <span style="font-weight:700;color:var(--danger);"><?= rupiah($kelas_remainder) ?></span>
+                </div>
+            </div>
+
+            <div class="dash-progress" style="margin-top:14px;">
+                <div class="top">
+                    <span class="lbl">Terkumpul dari target</span>
+                    <span class="val"><?= $pct_kelas ?>%</span>
+                </div>
+                <div class="track">
+                    <div class="fill" style="width:<?= $pct_kelas ?>%;"></div>
+                </div>
+            </div>
+
+            <?php if ($kelas_remainder <= 0): ?>
+                <div class="dash-notice" style="margin-top:14px;">
+                    <div><b>Target kas kelas tercapai.</b> Terima kasih atas partisipasi teman-teman!</div>
+                </div>
+            <?php else: ?>
+                <div class="dash-notice" style="margin-top:14px;">
+                    <div>Sudah terkumpul <b><?= rupiah($kelas_collected) ?></b> dari target kelas. Bagi yang belum, bisa melengkapi kapan saja ya. Terima kasih sudah ikut berpartisipasi!</div>
+                </div>
+            <?php endif; ?>
+        <?php endif; ?>
+    </div>
+
     <div class="dash-charts">
         <div class="dash-card">
             <div class="dash-card-head">
@@ -135,7 +214,7 @@ $kpis = [
                             <?php foreach ($pembayaran as $p): ?>
                                 <tr>
                                     <td style="color:var(--text-muted);"><?= $no++ ?></td>
-                                    <td><span style="font-weight:600;"><?= htmlspecialchars($p['periode']) ?></span></td>
+                                    <td><span style="font-weight:600;"><?= htmlspecialchars(Koneksi::periodeLabel($p['periode'])) ?></span></td>
                                     <td><span class="dash-amount"><?= rupiah((float)$p['jumlah']) ?></span></td>
                                     <td><?= $p['tanggal_bayar'] ? date('d/m/Y', strtotime($p['tanggal_bayar'])) : '-' ?></td>
                                     <td><?= status_pill($p['status']) ?></td>
@@ -164,12 +243,12 @@ $kpis = [
                 <div class="dash-legend">
                     <div class="dash-legend-item">
                         <span class="sw" style="background:var(--accent);"></span>
-                        <span class="name">Lunas<span class="sub"><?= $periode_lunas ?> periode</span></span>
+                        <span class="name">Terkumpul<span class="sub"><?= $periode_lunas ?> periode</span></span>
                         <span class="val"><?= rupiah($lunas) ?></span>
                     </div>
                     <div class="dash-legend-item">
                         <span class="sw" style="background:#d9a241;"></span>
-                        <span class="name">Belum<span class="sub"><?= count($pembayaran) - $periode_lunas ?> periode</span></span>
+                        <span class="name">Belum Terkumpul<span class="sub"><?= count($pembayaran) - $periode_lunas ?> periode</span></span>
                         <span class="val"><?= rupiah($belum) ?></span>
                     </div>
                 </div>

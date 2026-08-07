@@ -47,8 +47,8 @@ if (!function_exists('status_pill')) {
     function status_pill(string $status): string
     {
         if ($status === 'lunas') {
-            return '<span class="text-status lunas">Lunas</span>';
+            return '<span class="text-status lunas">Terkumpul</span>';
         }
-        return '<span class="text-status belum">Belum</span>';
+        return '<span class="text-status belum">Belum Terkumpul</span>';
     }
 }

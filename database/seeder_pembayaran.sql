@@ -4,15 +4,16 @@ USE db_kas_kelas;
 -- Mengisi 3 periode kas (Mei, Juni, Juli 2026) untuk semua siswa
 -- Jumlah kas per periode: Rp 5.000
 -- Variasi status: Mei lunas semua, Juni sebagian kecil belum, Juli sebagian besar belum
+-- Periode disimpan sebagai YYYY-MM agar bisa diurutkan kronologis.
 
 -- INSERT IGNORE: aman dijalankan berulang, baris duplikat (siswa_id, periode) diabaikan
 INSERT IGNORE INTO pembayaran (siswa_id, periode, jumlah, status, tanggal_bayar)
 SELECT
     s.id,
     CASE p.n
-        WHEN 1 THEN 'Mei 2026'
-        WHEN 2 THEN 'Juni 2026'
-        ELSE 'Juli 2026'
+        WHEN 1 THEN '2026-05'
+        WHEN 2 THEN '2026-06'
+        ELSE '2026-07'
     END AS periode,
     5000 AS jumlah,
     CASE

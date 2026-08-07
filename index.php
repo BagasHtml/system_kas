@@ -44,7 +44,7 @@
                 <article class="lp-point rv">
                     <div class="lp-point-num">01</div>
                     <h3>Catat iuran per periode</h3>
-                    <p>Pembayaran kas dicatat per bulan. Status lunas atau belum terlihat per siswa, lengkap dengan tanggal bayarnya.</p>
+                    <p>Pembayaran kas dicatat per bulan. Status terkumpul atau belum terlihat per siswa, lengkap dengan tanggal bayarnya.</p>
                 </article>
                 <article class="lp-point rv">
                     <div class="lp-point-num">02</div>
@@ -60,10 +60,11 @@
         </div>
     </section>
 
+    <!-- SECTION DASBOR: IFRAME DIGANTI GAMBAR STATIS -->
     <section id="dasbor" class="lp-section" style="background:#fcfbf8;border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
         <div class="lp-container">
             <h2 class="lp-h2 rv">Lihat langsung dasbornya.</h2>
-            <p class="lp-sec-lead rv">Ini bukan screenshot — tiap preview di bawah adalah halaman asli aplikasi yang dimuat langsung dari sistem.</p>
+            <p class="lp-sec-lead rv">Ini bukan screenshot mentah — tiap preview di bawah diambil langsung dari halaman asli aplikasi.</p>
 
             <div class="preview-stack">
                 <div class="preview rv" data-base="1180" data-height="720">
@@ -71,8 +72,15 @@
                         <div class="preview-dots"><span></span><span></span><span></span></div>
                         <div class="preview-url">localhost/kas_system/views/admin/dashboard.php</div>
                     </div>
-                    <div class="preview-screen" data-lenis-prevent>
-                        <iframe class="preview-iframe" src="views/admin/_preview.php" title="Preview dasbor admin" loading="lazy"></iframe>
+                    <div class="preview-screen">
+                        <img
+                            src="<?= BASE_URL ?>/assets/img/preview-admin.webp"
+                            alt="Preview dasbor admin: ringkasan pemasukan, grafik, dan daftar pembayaran terakhir"
+                            width="1180"
+                            height="720"
+                            loading="lazy"
+                            decoding="async"
+                        >
                     </div>
                     <div class="preview-cap">
                         <h3>Dasbor Admin</h3>
@@ -85,8 +93,15 @@
                         <div class="preview-dots"><span></span><span></span><span></span></div>
                         <div class="preview-url">localhost/kas_system/views/siswa/dashboard.php</div>
                     </div>
-                    <div class="preview-screen" data-lenis-prevent>
-                        <iframe class="preview-iframe" src="views/siswa/_preview.php" title="Preview dasbor siswa" loading="lazy"></iframe>
+                    <div class="preview-screen">
+                        <img
+                            src="<?= BASE_URL ?>/assets/img/preview-siswa.webp"
+                            alt="Preview dasbor siswa: status pembayaran pribadi dan daftar pengeluaran kelas"
+                            width="1180"
+                            height="720"
+                            loading="lazy"
+                            decoding="async"
+                        >
                     </div>
                     <div class="preview-cap">
                         <h3>Dasbor Siswa</h3>
@@ -138,8 +153,15 @@
                         <div class="preview-dots"><span></span><span></span><span></span></div>
                         <div class="preview-url">localhost/kas_system/views/siswa/_preview_bayar.php</div>
                     </div>
-                    <div class="preview-screen" data-lenis-prevent>
-                        <iframe class="preview-iframe" src="views/siswa/_preview_bayar.php" title="Preview bayar kas online" loading="lazy"></iframe>
+                    <div class="preview-screen">
+                        <img
+                            src="<?= BASE_URL ?>/assets/img/preview-bayar.webp"
+                            alt="Preview halaman bayar kas online via Dana dan QRIS"
+                            width="1180"
+                            height="560"
+                            loading="lazy"
+                            decoding="async"
+                        >
                     </div>
                 </div>
             </div>
@@ -181,58 +203,110 @@
     </div>
 </footer>
 
+<!-- TAMBAHKAN INI DI FILE CSS UTAMA ANDA -->
+<style>
+    /* Performance: isolasi rendering preview dari layout utama */
+    .preview-screen {
+        contain: strict;
+        overflow: hidden;
+        background: #f5f5f0;
+        border-radius: 0 0 8px 8px;
+    }
+
+    .preview-screen img {
+        display: block;
+        width: 100%;
+        height: auto;
+    }
+
+    /* GPU promotion hanya saat animasi berlangsung */
+    .rv {
+        will-change: opacity, transform;
+    }
+
+    .rv.in {
+        will-change: auto;
+    }
+
+    /* Hormati preferensi reduced-motion */
+    @media (prefers-reduced-motion: reduce) {
+        .rv {
+            opacity: 1 !important;
+            transform: none !important;
+            transition: none !important;
+        }
+
+        html.lenis,
+        html.lenis body {
+            scroll-behavior: auto !important;
+            height: auto !important;
+        }
+
+        html.lenis body {
+            overflow-y: auto !important;
+        }
+    }
+</style>
+
 <script src="<?= BASE_URL ?>/assets/vendor/lenis/lenis.min.js"></script>
 <script>
 (function () {
-    /* Smooth scroll (Lenis) */
+    'use strict';
+
+    function debounce(fn, ms) {
+        var timer;
+        return function () {
+            clearTimeout(timer);
+            timer = setTimeout(fn, ms);
+        };
+    }
+
     var lenis = null;
-    if (window.Lenis) {
-        lenis = new Lenis({ duration: 1.1 });
-        window.lenis = lenis;
-        function raf(time) { lenis.raf(time); requestAnimationFrame(raf); }
+    var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (window.Lenis && !prefersReducedMotion) {
+        lenis = new Lenis({
+            duration: 1.1,
+            smoothWheel: true,
+            wheelMultiplier: 1,
+            autoRaf: false
+        });
+
+        function raf(time) {
+            lenis.raf(time);
+            requestAnimationFrame(raf);
+        }
         requestAnimationFrame(raf);
     }
 
-    /* Smooth scroll untuk anchor nav, berhenti di bawah navbar */
+    // --- 2. Anchor scroll dengan offset navbar ---
     var NAV_OFFSET = 76;
     document.querySelectorAll('a[href^="#"]').forEach(function (a) {
         a.addEventListener('click', function (e) {
             var hash = a.getAttribute('href');
-            if (hash.length < 2) return;
+            if (!hash || hash.length < 2) return;
             var el = document.querySelector(hash);
             if (!el) return;
             e.preventDefault();
-            if (lenis) lenis.scrollTo(el, { offset: -NAV_OFFSET });
-            else el.scrollIntoView();
+            if (lenis) {
+                lenis.scrollTo(el, { offset: -NAV_OFFSET });
+            } else {
+                el.scrollIntoView({ behavior: 'smooth' });
+            }
         });
     });
 
-    /* Shadow halus di navbar saat halaman discroll */
+    // --- 3. Nav shadow on scroll (passive listener) ---
     var nav = document.querySelector('.lp-nav');
     function onScroll() {
-        if (nav) nav.classList.toggle('scrolled', (window.scrollY || window.pageYOffset) > 8);
+        if (nav) {
+            nav.classList.toggle('scrolled', (window.scrollY || window.pageYOffset) > 8);
+        }
     }
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 
-    /* Fit preview iframes ke lebar layar, seperti screenshot */
-    function fitPreviews() {
-        document.querySelectorAll('.preview').forEach(function (p) {
-            var screen = p.querySelector('.preview-screen');
-            var frame = p.querySelector('.preview-iframe');
-            if (!screen || !frame) return;
-            var base = parseInt(p.dataset.base || 1180, 10);
-            var height = parseInt(p.dataset.height || 720, 10);
-            var w = screen.clientWidth;
-            var s = w / base;
-            frame.style.width = base + 'px';
-            frame.style.height = height + 'px';
-            frame.style.transform = 'scale(' + s + ')';
-            screen.style.height = Math.floor(height * s) + 'px';
-        });
-    }
-
-    /* Reveal halus saat scroll masuk layar */
+    // --- 4. Reveal Observer (threshold rendah + rootMargin) ---
     var observer = new IntersectionObserver(function (entries) {
         entries.forEach(function (e) {
             if (e.isIntersecting) {
@@ -240,13 +314,27 @@
                 observer.unobserve(e.target);
             }
         });
-    }, { threshold: 0.12 });
+    }, {
+        threshold: 0.05,
+        rootMargin: '0px 0px -60px 0px'
+    });
 
-    document.querySelectorAll('.rv').forEach(function (el) { observer.observe(el); });
+    document.querySelectorAll('.rv').forEach(function (el) {
+        observer.observe(el);
+    });
+
+    // --- 5. fitPreviews HANYA jika masih pakai iframe (fallback) ---
+    // Karena sekarang pakai <img>, fungsi ini tidak diperlukan lagi.
+    // Dipertahankan sebagai no-op agar tidak error jika ada referensi lama.
+    function fitPreviews() {
+        // Gambar responsif ditangani oleh CSS: width:100%; height:auto;
+        // Tidak ada kalkulasi JS yang dibutuhkan.
+    }
 
     window.addEventListener('load', fitPreviews);
-    window.addEventListener('resize', fitPreviews);
+    window.addEventListener('resize', debounce(fitPreviews, 200));
     fitPreviews();
+
 })();
 </script>
 
