@@ -9,6 +9,7 @@ $title = 'Pengeluaran - Admin';
 $active = 'pengeluaran';
 include '../partials/header.php';
 include '../partials/admin_sidebar.php';
+include '../partials/helpers.php';
 include_once '../../database/db.php';
 
 $db = new Koneksi();

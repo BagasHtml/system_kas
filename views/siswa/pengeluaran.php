@@ -50,18 +50,19 @@ $siswa_absen = htmlspecialchars($_SESSION['siswa_absen'] ?? '-');
 
 $kpis = [
     ['label' => 'Total Pengeluaran', 'value' => rupiah($total), 'note' => $total_transaksi . ' transaksi', 'tone' => 'danger'],
-    ['label' => 'Sisa Saldo Kas', 'value' => rupiah($saldo), 'tone' => 'accent'],
+    ['label' => 'Sisa Saldo Kas Kelas', 'value' => rupiah($saldo), 'tone' => 'accent'],
     ['label' => 'Total Transaksi', 'value' => (string)$total_transaksi, 'tone' => 'info'],
-    ['label' => 'Rata-rata / Transaksi', 'value' => rupiah($total_transaksi > 0 ? $total / $total_transaksi : 0), 'tone' => 'warn'],
+    ['label' => 'Rata-rata per Transaksi', 'value' => rupiah($total_transaksi > 0 ? $total / $total_transaksi : 0), 'tone' => 'warn'],
 ];
 ?>
 
 <div class="main-content student-page">
+    <?php $active = 'pengeluaran'; include '../partials/siswa_sidebar.php'; ?>
     <div class="dash-topbar">
         <div>
             <p class="student-eyebrow">Pengeluaran Kas</p>
             <h1 class="dash-title">Catatan Pengeluaran</h1>
-            <p class="dash-subtitle">Semua penggunaan uang kas kelas dicatat transparan di sini</p>
+            <p class="dash-subtitle">Semua penggunaan uang kas kelas dicatat transparan untuk teman-teman</p>
         </div>
         <div class="dash-topbar-actions">
             <a href="dashboard.php#bayar" class="dash-btn dash-btn-primary">

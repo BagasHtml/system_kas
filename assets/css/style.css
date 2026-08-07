@@ -2236,10 +2236,10 @@ body {
 .lap-cell-belum { color: var(--danger); font-weight: 700; }
 
 @media print {
-    .admin-sidebar, .page-header .btn-primary-custom, .dash-btn, .btn-primary-custom, .lap-actions { display: none !important; }
+    .admin-sidebar, .dash-topbar-actions, .dash-btn, .modal { display: none !important; }
     .main-content { margin-left: 0 !important; padding: 0 !important; }
     body { background: #fff; }
-    .table-container { border: 1px solid #ddd; }
+    .dash-card { border: 1px solid #ddd; box-shadow: none; }
 }
 
 /* ==========================================================================
