@@ -52,6 +52,13 @@ $ada_target = $total_target > 0;
 $belum_bayar = $ada_target
     ? max(0, $total_target - (float)$sum['pemasukan'])
     : (float)$sum['belum_bayar'];
+
+$jumlah_siswa = Koneksi::jumlahSiswa();
+$kas_per_siswa = null;
+if ($ada_target && $target_map) {
+    $latest_tp = max(array_keys($target_map));
+    $kas_per_siswa = (float)$target_map[$latest_tp]['per_siswa'];
+}
 ?>
 
 <div class="main-content dash-page">
@@ -77,7 +84,7 @@ $belum_bayar = $ada_target
             ['label' => 'Pengeluaran', 'value' => rupiah($pengeluaran_total), 'tone' => 'danger'],
             ['label' => 'Saldo Kas', 'value' => rupiah($saldo), 'tone' => 'accent'],
             ['label' => 'Belum Terkumpul', 'value' => rupiah($belum_bayar), 'tone' => 'warn'],
-            ['label' => 'Target Kas', 'value' => rupiah($total_target), 'tone' => 'info'],
+            ['label' => 'Target Kas', 'value' => rupiah($total_target), 'tone' => 'info', 'note' => $ada_target && $kas_per_siswa !== null ? rupiah($kas_per_siswa) . ' x ' . $jumlah_siswa . ' siswa' : 'Belum ditetapkan'],
         ];
         foreach ($kpis as $k) {
             echo kpi($k);

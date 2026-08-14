@@ -44,6 +44,12 @@ if ($ada_target) {
     $belum = max(0, $total_target - $pemasukan);
 }
 
+$kas_per_siswa = null;
+if ($ada_target && $target_map) {
+    $latest_tp = max(array_keys($target_map));
+    $kas_per_siswa = (float)$target_map[$latest_tp]['per_siswa'];
+}
+
 $pct_lunas = $ada_target
     ? min(100, round($pemasukan / $total_target * 100))
     : min(100, round($pemasukan / max(1, $pemasukan + $belum) * 100));
@@ -78,7 +84,6 @@ $chart_any = array_sum($chart) > 0;
 $bulan = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 $username = htmlspecialchars($_SESSION['username'] ?? 'Admin');
 
-/* Trend bulan ini vs bulan lalu */
 $cur_m = (int)date('n');
 $prev_m = $cur_m - 1;
 $cur_val = $chart[$cur_m];
@@ -210,7 +215,7 @@ $banner = [
                 <div class="dash-card-head">
                     <div>
                         <div class="dash-card-title">Status Pembayaran</div>
-                        <div class="dash-card-sub"><?= $ada_target ? 'Perbandingan terhadap target kas kelas' : 'Perbandingan nominal kas' ?></div>
+                        <div class="dash-card-sub"><?= $ada_target && $kas_per_siswa !== null ? 'Target kelas = ' . rupiah($kas_per_siswa) . ' per siswa' : 'Perbandingan nominal kas' ?></div>
                     </div>
                 </div>
 
@@ -343,6 +348,10 @@ $banner = [
                 <div style="display:flex;justify-content:space-between;align-items:center;">
                     <span style="color:var(--text-secondary);">Kesepakatan Kas Kelas</span>
                     <span style="font-weight:700;"><?= $ada_target ? rupiah($total_target) : 'Belum ditetapkan' ?></span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <span style="color:var(--text-secondary);">Kas per Siswa</span>
+                    <span style="font-weight:700;"><?= $kas_per_siswa !== null ? rupiah($kas_per_siswa) . ' x ' . $total_siswa . ' siswa' : 'Belum ditetapkan' ?></span>
                 </div>
                 <div style="display:flex;justify-content:space-between;align-items:center;">
                     <span style="color:var(--text-secondary);">Total Pengeluaran</span>
