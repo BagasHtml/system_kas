@@ -138,6 +138,13 @@ $pengeluaran_terakhir = $db::q(
                     <div class="dash-card-title">Target Kas Kelas</div>
                     <div class="dash-card-sub">Jumlah kas yang disepakati kelas untuk dikumpulkan bersama</div>
                 </div>
+                <?php if (!$ada_target): ?>
+                    <span class="dash-status-pill muted"><i class="bi bi-dash-circle"></i> Belum Ditentukan</span>
+                <?php elseif ($kelas_remainder <= 0): ?>
+                    <span class="dash-status-pill success"><i class="bi bi-check-circle-fill"></i> Target Tercapai</span>
+                <?php else: ?>
+                    <span class="dash-status-pill warn"><i class="bi bi-hourglass-split"></i> <?= $pct_kelas ?>% Terkumpul</span>
+                <?php endif; ?>
             </div>
 
             <?php if (!$ada_target): ?>

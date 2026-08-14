@@ -50,7 +50,7 @@ if (isset($_POST['simpan_target'])) {
         exit;
     }
     $t_periode = trim($_POST['t_periode'] ?? '');
-    $t_target  = (float)($_POST['t_target'] ?? 0);
+    $t_target  = (float)preg_replace('/[^\d]/', '', trim($_POST['t_target'] ?? ''));
     $t_keterangan = trim($_POST['t_keterangan'] ?? '');
     $t_valid = preg_match('/^(\d{4})-(\d{2})$/', $t_periode, $tm) && (int)$tm[2] >= 1 && (int)$tm[2] <= 12;
 
@@ -183,6 +183,22 @@ $daftar_siswa = $resSiswa ? $resSiswa->fetch_all(MYSQLI_ASSOC) : [];
 
 $target_map = Koneksi::targetMap();
 
+$target_collected = [];
+if ($target_map) {
+    $tp_keys = array_keys($target_map);
+    $resC = $db::q(
+        "SELECT periode, COALESCE(SUM(CASE WHEN status = 'lunas' THEN jumlah END), 0) AS t
+         FROM pembayaran WHERE periode IN (" . implode(',', array_fill(0, count($tp_keys), '?')) . ")
+         GROUP BY periode",
+        $tp_keys
+    );
+    if ($resC) {
+        while ($row = $resC->fetch_assoc()) {
+            $target_collected[$row['periode']] = (float)$row['t'];
+        }
+    }
+}
+
 $period_collected = 0.0;
 $period_target = null;
 if ($selected_periode_db !== '') {
@@ -210,9 +226,6 @@ if ($selected_periode_db !== '') {
                        style="font-size:12px;padding:8px 14px;border:1px solid var(--border);border-radius:999px;font-family:'Inter',sans-serif;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.03);"
                        onchange="this.form.submit()">
             </form>
-            <button class="dash-btn dash-btn-primary" data-bs-toggle="modal" data-bs-target="#modalPembayaran">
-                <?= ic('<path d="M12 5v14M5 12h14"/>', 15) ?> Tambah
-            </button>
         </div>
     </div>
 
@@ -230,19 +243,20 @@ if ($selected_periode_db !== '') {
                 <?= Koneksi::csrfField() ?>
                 <div>
                     <label class="form-label">Bulan</label>
-                    <input type="month" class="form-control" name="t_periode"
+                    <input type="month" class="form-control" name="t_periode" id="t_periode"
                            value="<?= htmlspecialchars($selected_periode_db) ?>" style="min-width:150px;" required>
                 </div>
                 <div>
                     <label class="form-label">Target (Rp)</label>
-                    <input type="number" class="form-control" name="t_target" min="1" step="500"
-                           placeholder="mis. 50000" style="min-width:130px;" required>
+                    <input type="text" inputmode="numeric" class="form-control" name="t_target" id="t_target"
+                           placeholder="mis. 150000" style="min-width:130px;" required>
                 </div>
                 <div style="flex:1;min-width:180px;">
                     <label class="form-label">Keterangan (opsional)</label>
-                    <input type="text" class="form-control" name="t_keterangan" placeholder="mis. disepakati rapat kelas">
+                    <input type="text" class="form-control" name="t_keterangan" id="t_keterangan" placeholder="mis. disepakati rapat kelas">
                 </div>
-                <button type="submit" name="simpan_target" value="1" class="dash-btn dash-btn-primary">Simpan Target</button>
+                <button type="submit" name="simpan_target" value="1" class="dash-btn dash-btn-primary" id="btnSimpanTarget">Simpan Target</button>
+                <button type="button" class="dash-btn dash-btn-light" id="btnBatalEdit" style="display:none;" onclick="resetTargetForm()">Batal</button>
             </form>
 
             <?php if ($period_target !== null): ?>
@@ -278,23 +292,47 @@ if ($selected_periode_db !== '') {
                                 <th>Bulan</th>
                                 <th style="text-align:right;">Target</th>
                                 <th>Keterangan</th>
+                                <th>Status</th>
                                 <th style="text-align:center;width:80px;">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach ($target_map as $tp => $tv): ?>
+                                <?php
+                                $tc = $target_collected[$tp] ?? 0.0;
+                                $tt = (float)$tv['target'];
+                                $tpct = $tt > 0 ? min(100, round($tc / $tt * 100)) : 0;
+                                $reached = $tt > 0 && $tc >= $tt;
+                                ?>
                                 <tr>
                                     <td style="font-weight:600;"><?= htmlspecialchars(Koneksi::periodeLabel($tp)) ?></td>
-                                    <td style="text-align:right;"><span class="dash-amount"><?= rupiah($tv['target']) ?></span></td>
+                                    <td style="text-align:right;"><span class="dash-amount"><?= rupiah($tt) ?></span></td>
                                     <td><?= $tv['keterangan'] !== null ? htmlspecialchars($tv['keterangan']) : '-' ?></td>
+                                    <td>
+                                        <?php if ($reached): ?>
+                                            <span class="dash-status-pill success"><i class="bi bi-check-circle-fill"></i> Target Tercapai</span>
+                                        <?php else: ?>
+                                            <span class="dash-status-pill warn"><i class="bi bi-hourglass-split"></i> <?= $tpct ?>%</span>
+                                            <div style="font-size:11px;color:var(--text-muted);margin-top:3px;">Terkumpul <?= rupiah($tc) ?> dari <?= rupiah($tt) ?></div>
+                                        <?php endif; ?>
+                                    </td>
                                     <td style="text-align:center;">
-                                        <form method="post" action="" style="display:inline;">
-                                            <?= Koneksi::csrfField() ?>
-                                            <input type="hidden" name="hapus_target" value="<?= htmlspecialchars($tp) ?>">
-                                            <button type="submit" class="dash-btn dash-btn-light" style="padding:6px 12px;color:var(--danger);">
-                                                <i class="bi bi-trash"></i>
+                                        <div style="display:flex;gap:6px;justify-content:center;">
+                                            <button type="button" class="dash-btn dash-btn-light" style="padding:6px 12px;"
+                                                    data-tp="<?= htmlspecialchars($tp) ?>"
+                                                    data-target="<?= (int)$tv['target'] ?>"
+                                                    data-ket="<?= htmlspecialchars($tv['keterangan'] ?? '') ?>"
+                                                    onclick="editTarget(this)">
+                                                <i class="bi bi-pencil"></i>
                                             </button>
-                                        </form>
+                                            <form method="post" action="" style="display:inline;">
+                                                <?= Koneksi::csrfField() ?>
+                                                <input type="hidden" name="hapus_target" value="<?= htmlspecialchars($tp) ?>">
+                                                <button type="submit" class="dash-btn dash-btn-light" style="padding:6px 12px;color:var(--danger);">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -311,7 +349,11 @@ if ($selected_periode_db !== '') {
                 <div class="dash-card-title">Bulan: <?= $selected_periode_db !== '' ? htmlspecialchars(Koneksi::periodeLabel($selected_periode_db)) : 'Semua Bulan' ?></div>
                 <div class="dash-card-sub"><?= $total_data ?> catatan pembayaran</div>
             </div>
-            <form class="table-search" method="get">
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                <button class="dash-btn dash-btn-primary" data-bs-toggle="modal" data-bs-target="#modalPembayaran">
+                    <?= ic('<path d="M12 5v14M5 12h14"/>', 15) ?> Tambah
+                </button>
+                <form class="table-search" method="get">
                 <?php if ($selected_periode !== ''): ?>
                     <input type="hidden" name="periode" value="<?= htmlspecialchars($selected_periode) ?>">
                 <?php endif; ?>
@@ -320,7 +362,8 @@ if ($selected_periode_db !== '') {
                 <?php if ($cari !== ''): ?>
                     <a class="table-search-clear" href="?<?= $selected_periode !== '' ? 'periode=' . urlencode($selected_periode) : '' ?>" title="Reset">×</a>
                 <?php endif; ?>
-            </form>
+                </form>
+            </div>
         </div>
         <div class="dash-table-wrap">
             <table class="dash-table">
@@ -462,6 +505,24 @@ function toggleTanggal() {
     if (status === 'lunas' && !tg.value) {
         tg.value = new Date().toISOString().slice(0, 10);
     }
+}
+
+function editTarget(btn) {
+    document.getElementById('t_periode').value = btn.dataset.tp || '';
+    document.getElementById('t_target').value = btn.dataset.target || '';
+    document.getElementById('t_keterangan').value = btn.dataset.ket || '';
+    document.getElementById('btnSimpanTarget').textContent = 'Simpan Perubahan';
+    document.getElementById('btnBatalEdit').style.display = '';
+    document.getElementById('t_periode').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    document.getElementById('t_target').focus();
+}
+
+function resetTargetForm() {
+    document.getElementById('t_periode').value = <?= json_encode($selected_periode_db) ?>;
+    document.getElementById('t_target').value = '';
+    document.getElementById('t_keterangan').value = '';
+    document.getElementById('btnSimpanTarget').textContent = 'Simpan Target';
+    document.getElementById('btnBatalEdit').style.display = 'none';
 }
 
 document.getElementById('modalPembayaran')?.addEventListener('show.bs.modal', function (e) {
