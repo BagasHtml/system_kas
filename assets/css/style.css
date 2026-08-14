@@ -2665,13 +2665,9 @@ body {
 .lp-footer a { color: var(--text-muted); text-decoration: none; }
 .lp-footer a:hover { color: var(--accent); }
 
-/* ---- Reveal on scroll (hanya aktif bila JS ada) ---- */
-.js .rv { opacity: 0; transform: translateY(16px); transition: opacity 0.6s ease, transform 0.6s ease; }
+/* ---- Reveal on scroll (disabled untuk scroll instan) ---- */
+.js .rv { opacity: 1; transform: none; transition: none; }
 .js .rv.in { opacity: 1; transform: none; }
-
-@media (prefers-reduced-motion: reduce) {
-    .js .rv { opacity: 1; transform: none; transition: none; }
-}
 
 @media (max-width: 860px) {
     .lp-points, .lp-integ, .lp-cta-grid { grid-template-columns: 1fr; }

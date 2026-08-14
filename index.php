@@ -219,67 +219,18 @@
         height: auto;
     }
 
-    /* GPU promotion hanya saat animasi berlangsung */
     .rv {
-        will-change: opacity, transform;
-    }
-
-    .rv.in {
-        will-change: auto;
-    }
-
-    /* Hormati preferensi reduced-motion */
-    @media (prefers-reduced-motion: reduce) {
-        .rv {
-            opacity: 1 !important;
-            transform: none !important;
-            transition: none !important;
-        }
-
-        html.lenis,
-        html.lenis body {
-            scroll-behavior: auto !important;
-            height: auto !important;
-        }
-
-        html.lenis body {
-            overflow-y: auto !important;
-        }
+        opacity: 1 !important;
+        transform: none !important;
+        transition: none !important;
     }
 </style>
 
-<script src="<?= BASE_URL ?>/assets/vendor/lenis/lenis.min.js"></script>
 <script>
 (function () {
     'use strict';
 
-    function debounce(fn, ms) {
-        var timer;
-        return function () {
-            clearTimeout(timer);
-            timer = setTimeout(fn, ms);
-        };
-    }
-
-    var lenis = null;
-    var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    if (window.Lenis && !prefersReducedMotion) {
-        lenis = new Lenis({
-            duration: 1.1,
-            smoothWheel: true,
-            wheelMultiplier: 1,
-            autoRaf: false
-        });
-
-        function raf(time) {
-            lenis.raf(time);
-            requestAnimationFrame(raf);
-        }
-        requestAnimationFrame(raf);
-    }
-
-    // --- 2. Anchor scroll dengan offset navbar ---
+    // Anchor scroll dengan offset navbar (tanpa animasi lambat/lenis)
     var NAV_OFFSET = 76;
     document.querySelectorAll('a[href^="#"]').forEach(function (a) {
         a.addEventListener('click', function (e) {
@@ -288,15 +239,15 @@
             var el = document.querySelector(hash);
             if (!el) return;
             e.preventDefault();
-            if (lenis) {
-                lenis.scrollTo(el, { offset: -NAV_OFFSET });
-            } else {
-                el.scrollIntoView({ behavior: 'smooth' });
-            }
+            var elementPosition = el.getBoundingClientRect().top + window.pageYOffset;
+            window.scrollTo({
+                top: elementPosition - NAV_OFFSET,
+                behavior: 'auto'
+            });
         });
     });
 
-    // --- 3. Nav shadow on scroll (passive listener) ---
+    // Nav shadow on scroll
     var nav = document.querySelector('.lp-nav');
     function onScroll() {
         if (nav) {
@@ -305,35 +256,6 @@
     }
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
-
-    // --- 4. Reveal Observer (threshold rendah + rootMargin) ---
-    var observer = new IntersectionObserver(function (entries) {
-        entries.forEach(function (e) {
-            if (e.isIntersecting) {
-                e.target.classList.add('in');
-                observer.unobserve(e.target);
-            }
-        });
-    }, {
-        threshold: 0.05,
-        rootMargin: '0px 0px -60px 0px'
-    });
-
-    document.querySelectorAll('.rv').forEach(function (el) {
-        observer.observe(el);
-    });
-
-    // --- 5. fitPreviews HANYA jika masih pakai iframe (fallback) ---
-    // Karena sekarang pakai <img>, fungsi ini tidak diperlukan lagi.
-    // Dipertahankan sebagai no-op agar tidak error jika ada referensi lama.
-    function fitPreviews() {
-        // Gambar responsif ditangani oleh CSS: width:100%; height:auto;
-        // Tidak ada kalkulasi JS yang dibutuhkan.
-    }
-
-    window.addEventListener('load', fitPreviews);
-    window.addEventListener('resize', debounce(fitPreviews, 200));
-    fitPreviews();
 
 })();
 </script>
