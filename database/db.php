@@ -3,13 +3,9 @@
 class Koneksi {
   private static $local = "localhost";
   private static $username = "root";
-  private static $password = "";
+  private static $password = "bagas_tresna123";
   private static $dbname = "db_kas_kelas";
 
-  /**
-   * Koneksi mysqli di-cache per-request.
-   * Statis di PHP hanya hidup satu request, jadi ini aman dipakai ulang antar query.
-   */
   public static $db = null;
 
   private static function connection()
@@ -41,10 +37,6 @@ class Koneksi {
     return $koneksi->query($sql);
   }
 
-  /**
-   * Query aman memakai prepared statement.
-   * Contoh: Koneksi::q("SELECT * FROM siswa WHERE id = ?", [1])
-   */
   public static function q($sql, $params = [])
   {
     $koneksi = self::connection();
