@@ -61,8 +61,11 @@ $belum_bayar = $ada_target
             <p class="dash-subtitle">Rekap pembayaran dan saldo kas kelas</p>
         </div>
         <div class="dash-topbar-actions">
+            <a href="export_excel.php" class="dash-btn dash-btn-light">
+                <i class="bi bi-file-earmark-excel"></i> Ekspor Excel / CSV
+            </a>
             <button class="dash-btn dash-btn-primary" onclick="window.print()">
-                <?= ic('<path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/>', 15) ?> Cetak
+                <?= ic('<path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/>', 15) ?> Cetak Laporan
             </button>
         </div>
     </div>
@@ -88,9 +91,14 @@ $belum_bayar = $ada_target
                 <div class="dash-card-title">Matriks Pembayaran per Siswa</div>
                 <div class="dash-card-sub"><?= count($siswa) ?> siswa &times; <?= count($periode_list) ?> bulan</div>
             </div>
-            <button class="dash-btn dash-btn-light" onclick="window.print()">
-                <?= ic('<path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/>', 15) ?> Cetak
-            </button>
+            <div style="display:flex;gap:8px;">
+                <a href="export_excel.php" class="dash-btn dash-btn-light">
+                    <i class="bi bi-file-earmark-excel"></i> Ekspor CSV
+                </a>
+                <button class="dash-btn dash-btn-light" onclick="window.print()">
+                    <?= ic('<path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/>', 15) ?> Cetak
+                </button>
+            </div>
         </div>
         <div class="dash-table-wrap">
             <table class="dash-table lap-matrix">

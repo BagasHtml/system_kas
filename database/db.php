@@ -212,3 +212,5 @@ class Koneksi {
     }
   }
 }
+
+require_once __DIR__ . '/migrate_v2.php';

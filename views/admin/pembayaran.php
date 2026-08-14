@@ -85,6 +85,37 @@ if (isset($_POST['hapus_target'])) {
     exit;
 }
 
+/* ===== VERIFIKASI BUKTI TRANSFER ===== */
+if (isset($_POST['setuju_verifikasi'])) {
+    if (!Koneksi::csrfCheck()) {
+        Koneksi::setFlash('error', 'Token keamanan tidak valid.');
+        header("Location: pembayaran.php" . $back);
+        exit;
+    }
+    $id = (int)$_POST['setuju_verifikasi'];
+    if ($id > 0) {
+        $db::q("UPDATE pembayaran SET status = 'lunas', tanggal_bayar = NOW() WHERE id = ?", [$id]);
+        Koneksi::setFlash('success', 'Pembayaran berhasil diverifikasi & disetujui (Status: Lunas).');
+    }
+    header("Location: pembayaran.php" . $back);
+    exit;
+}
+
+if (isset($_POST['tolak_verifikasi'])) {
+    if (!Koneksi::csrfCheck()) {
+        Koneksi::setFlash('error', 'Token keamanan tidak valid.');
+        header("Location: pembayaran.php" . $back);
+        exit;
+    }
+    $id = (int)$_POST['tolak_verifikasi'];
+    if ($id > 0) {
+        $db::q("UPDATE pembayaran SET status = 'belum' WHERE id = ?", [$id]);
+        Koneksi::setFlash('error', 'Konfirmasi pembayaran ditolak.');
+    }
+    header("Location: pembayaran.php" . $back);
+    exit;
+}
+
 /* ===== TAMBAH / EDIT ===== */
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     if (!Koneksi::csrfCheck()) {
@@ -96,7 +127,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     $siswa_id  = (int)($_POST['siswa_id'] ?? 0);
     $periode   = trim($_POST['periode'] ?? '');
     $jumlah    = (float)($_POST['jumlah'] ?? 0);
-    $status    = ($_POST['status'] ?? 'belum') === 'lunas' ? 'lunas' : 'belum';
+    $status    = in_array($_POST['status'] ?? '', ['lunas', 'pending', 'belum']) ? $_POST['status'] : 'belum';
     $tanggal   = trim($_POST['tanggal_bayar'] ?? '');
     $tanggal   = $tanggal !== '' ? $tanggal : null;
 
@@ -181,19 +212,25 @@ $pg_query = http_build_query($pg_parts);
 $resSiswa = $db::q("SELECT id, nama, nomor_absen FROM siswa ORDER BY nomor_absen ASC");
 $daftar_siswa = $resSiswa ? $resSiswa->fetch_all(MYSQLI_ASSOC) : [];
 
+$pending_list = $db::q(
+    "SELECT p.*, s.nama, s.nomor_absen
+     FROM pembayaran p
+     JOIN siswa s ON p.siswa_id = s.id
+     WHERE p.status = 'pending'
+     ORDER BY p.id DESC"
+)->fetch_all(MYSQLI_ASSOC);
+
 $target_map = Koneksi::targetMap();
 
 $period_collected = 0.0;
 $period_target = null;
 if ($selected_periode_db !== '') {
     $aggP = $db::q(
-        "SELECT COALESCE(SUM(CASE WHEN status = 'lunas' THEN jumlah END), 0) AS t FROM pembayaran WHERE periode = ?",
+        "SELECT COALESCE(SUM(jumlah), 0) AS total FROM pembayaran WHERE status = 'lunas' AND periode = ?",
         [$selected_periode_db]
     )->fetch_assoc();
-    $period_collected = (float)($aggP['t'] ?? 0);
-    if (isset($target_map[$selected_periode_db])) {
-        $period_target = $target_map[$selected_periode_db]['target'];
-    }
+    $period_collected = (float)($aggP['total'] ?? 0);
+    $period_target = $target_map[$selected_periode_db]['target'] ?? null;
 }
 ?>
 
@@ -201,14 +238,9 @@ if ($selected_periode_db !== '') {
     <div class="dash-topbar">
         <div>
             <h1 class="dash-title">Pembayaran Kas</h1>
-            <p class="dash-subtitle">Kelola status pembayaran kas per bulan</p>
+            <p class="dash-subtitle">Catat dan kelola iuran kas bulanan siswa</p>
         </div>
         <div class="dash-topbar-actions">
-            <form action="" method="GET">
-                <input type="month" name="periode"
-                       value="<?= htmlspecialchars($selected_periode) ?>"
-                       style="font-size:12px;padding:8px 14px;border:1px solid var(--border);border-radius:999px;font-family:'Inter',sans-serif;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.03);"
-                       onchange="this.form.submit()">
             </form>
             <button class="dash-btn dash-btn-primary" data-bs-toggle="modal" data-bs-target="#modalPembayaran">
                 <?= ic('<path d="M12 5v14M5 12h14"/>', 15) ?> Tambah
@@ -438,6 +470,7 @@ if ($selected_periode_db !== '') {
                         <label class="form-label">Status</label>
                         <select class="form-select" name="status" id="status" onchange="toggleTanggal()">
                             <option value="belum">Belum Terkumpul</option>
+                            <option value="pending">Menunggu Verifikasi (Pending)</option>
                             <option value="lunas">Terkumpul</option>
                         </select>
                     </div>
@@ -455,6 +488,21 @@ if ($selected_periode_db !== '') {
     </div>
 </div>
 
+<div class="modal fade" id="modalBuktiVerifikasi" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title" id="modalBuktiVerifikasiTitle">Bukti Transfer</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalBuktiVerifikasiImg" src="" alt="Bukti Transfer" style="max-width:100%;max-height:400px;border-radius:8px;object-fit:contain;">
+                <p id="modalBuktiVerifikasiCatatan" style="margin-top:12px;font-size:13px;color:var(--text-secondary);"></p>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 function toggleTanggal() {
     const status = document.getElementById('status').value;
@@ -463,6 +511,14 @@ function toggleTanggal() {
         tg.value = new Date().toISOString().slice(0, 10);
     }
 }
+
+document.getElementById('modalBuktiVerifikasi')?.addEventListener('show.bs.modal', function (e) {
+    const btn = e.relatedTarget;
+    document.getElementById('modalBuktiVerifikasiTitle').textContent = btn?.dataset.title || 'Bukti Transfer';
+    document.getElementById('modalBuktiVerifikasiImg').src = btn?.dataset.img || '';
+    const cat = btn?.dataset.catatan;
+    document.getElementById('modalBuktiVerifikasiCatatan').textContent = cat ? 'Catatan Siswa: ' + cat : '';
+});
 
 document.getElementById('modalPembayaran')?.addEventListener('show.bs.modal', function (e) {
     const btn = e.relatedTarget;

@@ -131,15 +131,16 @@ $pg_query = http_build_query(['cari' => $cari]);
                     <tr>
                         <th style="width:60px;">No</th>
                         <th>Nama Siswa</th>
-                        <th style="width:120px;">Nomor Absen</th>
-                        <th style="width:160px;">Tanggal Daftar</th>
+                        <th style="width:110px;">Nomor Absen</th>
+                        <th style="width:150px;">Status Iuran</th>
+                        <th style="width:140px;">Tanggal Daftar</th>
                         <th style="text-align:center;width:130px;">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($siswa)): ?>
                         <tr>
-                            <td colspan="5">
+                            <td colspan="6">
                                 <div class="dash-empty">
                                     <div class="t"><?= $cari !== '' ? 'Tidak ada hasil untuk "' . htmlspecialchars($cari) . '"' : 'Belum ada data siswa' ?></div>
                                     <div class="s"><?= $cari === '' ? 'Tambah siswa melalui tombol Tambah Siswa' : 'Coba kata kunci lain' ?></div>
@@ -149,6 +150,7 @@ $pg_query = http_build_query(['cari' => $cari]);
                     <?php else: ?>
                         <?php $no = $offset + 1; ?>
                         <?php foreach ($siswa as $s): ?>
+                            <?php $tunggakan = get_tunggakan_siswa((int)$s['id']); ?>
                             <tr>
                                 <td style="color:var(--text-muted);"><?= $no++ ?></td>
                                 <td>
@@ -160,6 +162,17 @@ $pg_query = http_build_query(['cari' => $cari]);
                                     </div>
                                 </td>
                                 <td><span class="dash-amount"><?= (int)$s['nomor_absen'] ?></span></td>
+                                <td>
+                                    <?php if ($tunggakan > 0): ?>
+                                        <span class="badge bg-danger" style="font-size:11px;font-weight:600;padding:4px 8px;border-radius:12px;">
+                                            <i class="bi bi-exclamation-triangle-fill"></i> Menunggak <?= $tunggakan ?> Bulan
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="badge bg-success" style="font-size:11px;font-weight:600;padding:4px 8px;border-radius:12px;">
+                                            <i class="bi bi-check-circle-fill"></i> Lunas
+                                        </span>
+                                    <?php endif; ?>
+                                </td>
                                 <td style="color:var(--text-secondary);"><?= date('d/m/Y', strtotime($s['created_at'])) ?></td>
                                 <td style="text-align:center;">
                                     <div style="display:flex;gap:6px;justify-content:center;">
