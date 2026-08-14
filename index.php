@@ -1,341 +1,777 @@
-<?php $title = 'Sistem Kas Kelas'; ?>
-<?php include 'views/partials/header.php'; ?>
-<script>document.documentElement.classList.add('js');</script>
-
-<nav class="lp-nav">
-    <div class="lp-nav-inner">
-        <a href="#top" class="lp-brand">
-            <span class="lp-brand-mark">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/></svg>
-            </span>
-            Sistem Kas Kelas
-        </a>
-        <div class="lp-nav-links">
-            <a href="#tentang">Tentang</a>
-            <a href="#dasbor">Dasbor</a>
-            <a href="#integrasi">Integrasi</a>
-            <a href="#masuk" class="lp-btn lp-btn-dark" style="padding:8px 16px;">Masuk</a>
-        </div>
-    </div>
-</nav>
-
-<main id="top">
-
-    <section class="lp-hero lp-container rv">
-        <h1 class="lp-h1">Kas kelas dicatat rapi,<br>transparan ke <em>semua orang</em>.</h1>
-        <p class="lp-lead">
-            Sistem Kas Kelas membantu pengurus mencatat iuran tiap periode, melacak siapa yang
-            sudah atau belum bayar, dan menampilkan pengeluaran kas secara terbuka —
-            ke guru, pengurus, dan seluruh siswa.
-        </p>
-        <div class="lp-hero-cta">
-            <a href="views/siswa/index.php" class="lp-btn lp-btn-green">Masuk sebagai Siswa</a>
-            <a href="views/admin/login.php" class="lp-btn lp-btn-dark">Masuk Admin</a>
-        </div>
-        <p class="lp-hero-note">Akun demo admin: admin / admin123 &middot; Siswa demo: Ahmad Fauzi, absen 1</p>
-    </section>
-
-    <section id="tentang" class="lp-section">
-        <div class="lp-container">
-            <h2 class="lp-h2 rv">Dibuat buat apa?</h2>
-            <p class="lp-sec-lead rv">Iuran kas itu hal kecil, tapi kalau dicatat asal-asalan, bisa jadi rebutan. Tiga hal ini yang diberesin:</p>
-
-            <div class="lp-points">
-                <article class="lp-point rv">
-                    <div class="lp-point-num">01</div>
-                    <h3>Catat iuran per periode</h3>
-                    <p>Pembayaran kas dicatat per bulan. Status terkumpul atau belum terlihat per siswa, lengkap dengan tanggal bayarnya.</p>
-                </article>
-                <article class="lp-point rv">
-                    <div class="lp-point-num">02</div>
-                    <h3>Pengeluaran yang terbuka</h3>
-                    <p>Setiap rupiah yang keluar tampil di dasbor siswa. Siswa tidak perlu bertanya ke pengurus lagi.</p>
-                </article>
-                <article class="lp-point rv">
-                    <div class="lp-point-num">03</div>
-                    <h3>Laporan ringkas</h3>
-                    <p>Total masuk, total keluar, dan sisa saldo dihitung otomatis. Siap dicetak per periode.</p>
-                </article>
-            </div>
-        </div>
-    </section>
-
-    <!-- SECTION DASBOR: IFRAME DIGANTI GAMBAR STATIS -->
-    <section id="dasbor" class="lp-section" style="background:#fcfbf8;border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
-        <div class="lp-container">
-            <h2 class="lp-h2 rv">Lihat langsung dasbornya.</h2>
-            <p class="lp-sec-lead rv">Ini bukan screenshot mentah — tiap preview di bawah diambil langsung dari halaman asli aplikasi.</p>
-
-            <div class="preview-stack">
-                <div class="preview rv" data-base="1180" data-height="720">
-                    <div class="preview-bar">
-                        <div class="preview-dots"><span></span><span></span><span></span></div>
-                        <div class="preview-url">localhost/kas_system/views/admin/dashboard.php</div>
-                    </div>
-                    <div class="preview-screen">
-                        <img
-                            src="<?= BASE_URL ?>/assets/img/preview-admin.webp"
-                            alt="Preview dasbor admin: ringkasan pemasukan, grafik, dan daftar pembayaran terakhir"
-                            width="1180"
-                            height="720"
-                            loading="lazy"
-                            decoding="async"
-                        >
-                    </div>
-                    <div class="preview-cap">
-                        <h3>Dasbor Admin</h3>
-                        <p>Ringkasan pemasukan dan saldo, grafik masuk-keluar, serta daftar pembayaran terakhir. Data siswa, pembayaran, dan pengeluaran bisa dicari langsung tanpa scroll.</p>
-                    </div>
-                </div>
-
-                <div class="preview rv" data-base="1180" data-height="720">
-                    <div class="preview-bar">
-                        <div class="preview-dots"><span></span><span></span><span></span></div>
-                        <div class="preview-url">localhost/kas_system/views/siswa/dashboard.php</div>
-                    </div>
-                    <div class="preview-screen">
-                        <img
-                            src="<?= BASE_URL ?>/assets/img/preview-siswa.webp"
-                            alt="Preview dasbor siswa: status pembayaran pribadi dan daftar pengeluaran kelas"
-                            width="1180"
-                            height="720"
-                            loading="lazy"
-                            decoding="async"
-                        >
-                    </div>
-                    <div class="preview-cap">
-                        <h3>Dasbor Siswa</h3>
-                        <p>Status pembayaran pribadi per periode, sisa saldo kas, dan daftar pengeluaran kelas — semua tampil apa adanya.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section id="integrasi" class="lp-section">
-        <div class="lp-container">
-            <h2 class="lp-h2 rv">Integrasi &amp; cara kerja</h2>
-            <p class="lp-sec-lead rv">Metode bayar yang dipakai sehari-hari, dan data yang tetap di perangkat sendiri.</p>
-
-            <div class="lp-integ">
-                <div class="lp-integ-list rv">
-                    <div class="lp-integ-item">
-                        <div class="lp-integ-icon">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4Z"/></svg>
-                        </div>
-                        <div>
-                            <h3>Send Dana</h3>
-                            <p>Bayar kas lewat transfer Dana ke nomor bendahara <code>0813-2175-0459</code>.</p>
-                        </div>
-                    </div>
-                    <div class="lp-integ-item">
-                        <div class="lp-integ-icon">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h4v4h-4z"/></svg>
-                        </div>
-                        <div>
-                            <h3>QRIS</h3>
-                            <p>Scan dari e-wallet atau aplikasi bank mana pun, pembayaran langsung tercatat.</p>
-                        </div>
-                    </div>
-                    <div class="lp-integ-item">
-                        <div class="lp-integ-icon">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-                        </div>
-                        <div>
-                            <h3>Self-hosted</h3>
-                            <p>Semua aset dan data berjalan di server sendiri, tanpa CDN atau layanan luar.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="preview rv" data-base="1180" data-height="560">
-                    <div class="preview-bar">
-                        <div class="preview-dots"><span></span><span></span><span></span></div>
-                        <div class="preview-url">localhost/kas_system/views/siswa/_preview_bayar.php</div>
-                    </div>
-                    <div class="preview-screen">
-                        <img
-                            src="<?= BASE_URL ?>/assets/img/preview-bayar.webp"
-                            alt="Preview halaman bayar kas online via Dana dan QRIS"
-                            width="1180"
-                            height="560"
-                            loading="lazy"
-                            decoding="async"
-                        >
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section id="masuk" class="lp-section" style="background:#fcfbf8;border-top:1px solid var(--border);">
-        <div class="lp-container">
-            <h2 class="lp-h2 rv">Masuk</h2>
-            <p class="lp-sec-lead rv">Pilih peran kamu.</p>
-
-            <div class="lp-cta-grid">
-                <div class="lp-cta-card rv">
-                    <h3>Masuk sebagai Siswa</h3>
-                    <p>Cukup isi nama dan nomor absen. Lihat status pembayaran dan pengeluaran kas kelas.</p>
-                    <a href="views/siswa/index.php" class="lp-btn lp-btn-green">Masuk Siswa</a>
-                </div>
-                <div class="lp-cta-card rv">
-                    <h3>Masuk Admin</h3>
-                    <p>Kelola data siswa, catat pembayaran, atur pengeluaran, dan cetak laporan.</p>
-                    <a href="views/admin/login.php" class="lp-btn lp-btn-dark">Masuk Admin</a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-</main>
-
-<footer class="lp-footer">
-    <div class="lp-footer-inner">
-        <a href="#top" class="lp-brand">
-            <span class="lp-brand-mark">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/></svg>
-            </span>
-            Sistem Kas Kelas
-        </a>
-        <span>Admin demo: admin / admin123</span>
-        <a href="#top">Kembali ke atas &uarr;</a>
-    </div>
-</footer>
-
-<!-- TAMBAHKAN INI DI FILE CSS UTAMA ANDA -->
-<style>
-    /* Performance: isolasi rendering preview dari layout utama */
-    .preview-screen {
-        contain: strict;
-        overflow: hidden;
-        background: #f5f5f0;
-        border-radius: 0 0 8px 8px;
-    }
-
-    .preview-screen img {
-        display: block;
-        width: 100%;
-        height: auto;
-    }
-
-    /* GPU promotion hanya saat animasi berlangsung */
-    .rv {
-        will-change: opacity, transform;
-    }
-
-    .rv.in {
-        will-change: auto;
-    }
-
-    /* Hormati preferensi reduced-motion */
-    @media (prefers-reduced-motion: reduce) {
-        .rv {
-            opacity: 1 !important;
-            transform: none !important;
-            transition: none !important;
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UangKas Kelas - Sistem Iuran Online</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        html.lenis,
-        html.lenis body {
-            scroll-behavior: auto !important;
-            height: auto !important;
+        :root {
+            --green-900: #064e3b;
+            --green-700: #047857;
+            --green-600: #059669;
+            --green-500: #10b981;
+            --green-100: #d1fae5;
+            --green-50: #ecfdf5;
+            --gray-900: #111827;
+            --gray-700: #374151;
+            --gray-500: #6b7280;
+            --gray-300: #d1d5db;
+            --gray-100: #f3f4f6;
+            --gray-50: #f9fafb;
+            --white: #ffffff;
+            --red-600: #dc2626;
+            --red-100: #fee2e2;
+            --amber-600: #d97706;
+            --amber-100: #fef3c7;
         }
 
-        html.lenis body {
-            overflow-y: auto !important;
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-900);
+            line-height: 1.6;
         }
-    }
-</style>
 
-<script src="<?= BASE_URL ?>/assets/vendor/lenis/lenis.min.js"></script>
-<script>
-(function () {
-    'use strict';
-
-    function debounce(fn, ms) {
-        var timer;
-        return function () {
-            clearTimeout(timer);
-            timer = setTimeout(fn, ms);
-        };
-    }
-
-    var lenis = null;
-    var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    if (window.Lenis && !prefersReducedMotion) {
-        lenis = new Lenis({
-            duration: 1.1,
-            smoothWheel: true,
-            wheelMultiplier: 1,
-            autoRaf: false
-        });
-
-        function raf(time) {
-            lenis.raf(time);
-            requestAnimationFrame(raf);
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 24px;
         }
-        requestAnimationFrame(raf);
-    }
 
-    // --- 2. Anchor scroll dengan offset navbar ---
-    var NAV_OFFSET = 76;
-    document.querySelectorAll('a[href^="#"]').forEach(function (a) {
-        a.addEventListener('click', function (e) {
-            var hash = a.getAttribute('href');
-            if (!hash || hash.length < 2) return;
-            var el = document.querySelector(hash);
-            if (!el) return;
-            e.preventDefault();
-            if (lenis) {
-                lenis.scrollTo(el, { offset: -NAV_OFFSET });
-            } else {
-                el.scrollIntoView({ behavior: 'smooth' });
+        /* Navigation */
+        nav {
+            background: var(--white);
+            border-bottom: 1px solid var(--gray-100);
+            padding: 18px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--gray-900);
+            text-decoration: none;
+            letter-spacing: -0.5px;
+        }
+
+        .logo span {
+            color: var(--green-600);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--gray-700);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--green-600);
+        }
+
+        .login-btn {
+            background: var(--gray-900);
+            color: var(--white);
+            padding: 8px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .login-btn:hover {
+            background: var(--green-600);
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 80px 0 60px;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            background: var(--green-50);
+            color: var(--green-700);
+            padding: 6px 14px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 20px;
+            border: 1px solid var(--green-100);
+        }
+
+        .hero h1 {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--gray-900);
+            line-height: 1.15;
+            letter-spacing: -1px;
+        }
+
+        .hero h1 span {
+            color: var(--green-600);
+        }
+
+        .hero p {
+            font-size: 17px;
+            color: var(--gray-500);
+            max-width: 540px;
+            margin-bottom: 32px;
+            line-height: 1.7;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            background: var(--green-600);
+            color: var(--white);
+            padding: 12px 28px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 15px;
+            transition: background 0.2s;
+        }
+
+        .btn-primary:hover {
+            background: var(--green-700);
+        }
+
+        .btn-secondary {
+            background: var(--white);
+            color: var(--gray-900);
+            padding: 12px 28px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 15px;
+            border: 1px solid var(--gray-300);
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--gray-900);
+            background: var(--gray-50);
+        }
+
+        /* Stats */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin: 48px 0;
+        }
+
+        .stat-card {
+            background: var(--white);
+            padding: 24px;
+            border-radius: 8px;
+            border: 1px solid var(--gray-100);
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--gray-500);
+            font-weight: 500;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 6px;
+            letter-spacing: -0.5px;
+        }
+
+        .stat-value.positive {
+            color: var(--green-600);
+        }
+
+        .stat-sub {
+            font-size: 13px;
+            color: var(--gray-500);
+        }
+
+        /* Content Grid */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 64px;
+        }
+
+        .card {
+            background: var(--white);
+            border: 1px solid var(--gray-100);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--gray-100);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .card-badge {
+            background: var(--gray-100);
+            color: var(--gray-700);
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .card-body {
+            padding: 0 24px;
+        }
+
+        /* Member List */
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .list-item:last-child {
+            border-bottom: none;
+        }
+
+        .item-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            background: var(--green-50);
+            color: var(--green-700);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .item-name {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--gray-900);
+        }
+
+        .item-role {
+            font-size: 12px;
+            color: var(--gray-500);
+        }
+
+        .status {
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-paid {
+            background: var(--green-50);
+            color: var(--green-700);
+        }
+
+        .status-pending {
+            background: var(--amber-100);
+            color: var(--amber-600);
+        }
+
+        /* Transaction */
+        .transaction-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .icon-income {
+            background: var(--green-50);
+            color: var(--green-700);
+        }
+
+        .icon-expense {
+            background: var(--red-100);
+            color: var(--red-600);
+        }
+
+        .transaction-name {
+            font-weight: 500;
+            font-size: 14px;
+            color: var(--gray-900);
+        }
+
+        .transaction-date {
+            font-size: 12px;
+            color: var(--gray-500);
+            margin-top: 2px;
+        }
+
+        .transaction-amount {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .amount-positive {
+            color: var(--green-600);
+        }
+
+        .amount-negative {
+            color: var(--red-600);
+        }
+
+        /* Features */
+        .features {
+            margin: 64px 0;
+        }
+
+        .section-header {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .section-subtitle {
+            color: var(--gray-500);
+            font-size: 16px;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        .feature-card {
+            background: var(--white);
+            padding: 24px;
+            border-radius: 8px;
+            border: 1px solid var(--gray-100);
+        }
+
+        .feature-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--green-50);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+
+        .feature-icon-inner {
+            width: 20px;
+            height: 20px;
+            background: var(--green-600);
+            border-radius: 4px;
+        }
+
+        .feature-card h3 {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 8px;
+        }
+
+        .feature-card p {
+            font-size: 13px;
+            color: var(--gray-500);
+            line-height: 1.6;
+        }
+
+        /* CTA */
+        .cta-section {
+            background: var(--gray-900);
+            padding: 56px 40px;
+            border-radius: 8px;
+            margin: 64px 0;
+            text-align: center;
+            color: var(--white);
+        }
+
+        .cta-section h2 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .cta-section p {
+            font-size: 15px;
+            color: var(--gray-300);
+            margin-bottom: 28px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-button {
+            background: var(--green-500);
+            color: var(--white);
+            padding: 12px 32px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 15px;
+            display: inline-block;
+            transition: background 0.2s;
+        }
+
+        .cta-button:hover {
+            background: var(--green-600);
+        }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid var(--gray-100);
+            padding: 24px 0;
+            text-align: center;
+            color: var(--gray-500);
+            font-size: 13px;
+        }
+
+        footer span {
+            color: var(--green-600);
+            font-weight: 500;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
             }
-        });
-    });
 
-    // --- 3. Nav shadow on scroll (passive listener) ---
-    var nav = document.querySelector('.lp-nav');
-    function onScroll() {
-        if (nav) {
-            nav.classList.toggle('scrolled', (window.scrollY || window.pageYOffset) > 8);
-        }
-    }
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-
-    // --- 4. Reveal Observer (threshold rendah + rootMargin) ---
-    var observer = new IntersectionObserver(function (entries) {
-        entries.forEach(function (e) {
-            if (e.isIntersecting) {
-                e.target.classList.add('in');
-                observer.unobserve(e.target);
+            .hero {
+                padding: 48px 0 40px;
             }
-        });
-    }, {
-        threshold: 0.05,
-        rootMargin: '0px 0px -60px 0px'
-    });
 
-    document.querySelectorAll('.rv').forEach(function (el) {
-        observer.observe(el);
-    });
+            .hero h1 {
+                font-size: 32px;
+            }
 
-    // --- 5. fitPreviews HANYA jika masih pakai iframe (fallback) ---
-    // Karena sekarang pakai <img>, fungsi ini tidak diperlukan lagi.
-    // Dipertahankan sebagai no-op agar tidak error jika ada referensi lama.
-    function fitPreviews() {
-        // Gambar responsif ditangani oleh CSS: width:100%; height:auto;
-        // Tidak ada kalkulasi JS yang dibutuhkan.
-    }
+            .stats {
+                grid-template-columns: 1fr 1fr;
+            }
 
-    window.addEventListener('load', fitPreviews);
-    window.addEventListener('resize', debounce(fitPreviews, 200));
-    fitPreviews();
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
 
-})();
-</script>
+            .features-grid {
+                grid-template-columns: 1fr 1fr;
+            }
 
-<?php include 'views/partials/footer.php'; ?>
+            .cta-section {
+                padding: 40px 24px;
+            }
+
+            .cta-section h2 {
+                font-size: 24px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats,
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+            }
+
+            .hero-buttons a {
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="container nav-content">
+            <a href="#" class="logo">Uang<span>Kas</span></a>
+            <ul class="nav-links">
+                <li><a href="#dashboard">Dashboard</a></li>
+                <li><a href="#anggota">Anggota</a></li>
+                <li><a href="#transaksi">Transaksi</a></li>
+                <li><a href="#fitur">Fitur</a></li>
+            </ul>
+            <a href="#" class="login-btn">Masuk</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <span class="hero-badge">Sistem Keuangan Digital</span>
+            <h1>Kelola uang kas kelas<br>dengan <span>transparan</span> dan efisien.</h1>
+            <p>Catat iuran, pengeluaran, dan laporan keuangan kelas secara real-time. Data tersimpan rapi dan dapat diakses kapan saja oleh seluruh anggota.</p>
+            <div class="hero-buttons">
+                <a href="#" class="btn-primary">Mulai Sekarang</a>
+                <a href="#fitur" class="btn-secondary">Pelajari Lebih Lanjut</a>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-label">Saldo Saat Ini</div>
+                    <div class="stat-value positive">Rp 850.000</div>
+                    <div class="stat-sub">+Rp 150.000 minggu ini</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Anggota</div>
+                    <div class="stat-value">32</div>
+                    <div class="stat-sub">28 telah melunasi</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Pemasukan Bulan Ini</div>
+                    <div class="stat-value positive">Rp 1.200.000</div>
+                    <div class="stat-sub">Dari iuran anggota</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Pengeluaran Bulan Ini</div>
+                    <div class="stat-value">Rp 350.000</div>
+                    <div class="stat-sub">Untuk kegiatan kelas</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="content-grid">
+            <!-- Member List -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Status Iuran Anggota</h2>
+                    <span class="card-badge">Agustus 2026</span>
+                </div>
+                <div class="card-body">
+                    <div class="list-item">
+                        <div class="item-info">
+                            <div class="avatar">AS</div>
+                            <div>
+                                <div class="item-name">Ahmad Surya</div>
+                                <div class="item-role">Ketua Kelas</div>
+                            </div>
+                        </div>
+                        <span class="status status-paid">Lunas</span>
+                    </div>
+                    <div class="list-item">
+                        <div class="item-info">
+                            <div class="avatar">DW</div>
+                            <div>
+                                <div class="item-name">Dewi Wulandari</div>
+                                <div class="item-role">Bendahara</div>
+                            </div>
+                        </div>
+                        <span class="status status-paid">Lunas</span>
+                    </div>
+                    <div class="list-item">
+                        <div class="item-info">
+                            <div class="avatar">RP</div>
+                            <div>
+                                <div class="item-name">Rizky Pratama</div>
+                                <div class="item-role">Anggota</div>
+                            </div>
+                        </div>
+                        <span class="status status-pending">Belum</span>
+                    </div>
+                    <div class="list-item">
+                        <div class="item-info">
+                            <div class="avatar">NF</div>
+                            <div>
+                                <div class="item-name">Nadia Fitriani</div>
+                                <div class="item-role">Anggota</div>
+                            </div>
+                        </div>
+                        <span class="status status-paid">Lunas</span>
+                    </div>
+                    <div class="list-item">
+                        <div class="item-info">
+                            <div class="avatar">BK</div>
+                            <div>
+                                <div class="item-name">Budi Kurniawan</div>
+                                <div class="item-role">Sekretaris</div>
+                            </div>
+                        </div>
+                        <span class="status status-paid">Lunas</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transaction List -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Transaksi Terbaru</h2>
+                    <span class="card-badge">5 terakhir</span>
+                </div>
+                <div class="card-body">
+                    <div class="list-item">
+                        <div class="item-info">
+                            <div class="transaction-icon icon-income">IN</div>
+                            <div>
+                                <div class="transaction-name">Iuran Mingguan - Ahmad</div>
+                                <div class="transaction-date">7 Agustus 2026</div>
+                            </div>
+                        </div>
+                        <div class="transaction-amount amount-positive">+Rp 15.000</div>
+                    </div>
+                    <div class="list-item">
+                        <div class="item-info">
+                            <div class="transaction-icon icon-expense">OUT</div>
+                            <div>
+                                <div class="transaction-name">Beli Spidol dan ATK</div>
+                                <div class="transaction-date">6 Agustus 2026</div>
+                            </div>
+                        </div>
+                        <div class="transaction-amount amount-negative">-Rp 45.000</div>
+                    </div>
+                    <div class="list-item">
+                        <div class="item-info">
+                            <div class="transaction-icon icon-income">IN</div>
+                            <div>
+                                <div class="transaction-name">Iuran Mingguan - Dewi</div>
+                                <div class="transaction-date">5 Agustus 2026</div>
+                            </div>
+                        </div>
+                        <div class="transaction-amount amount-positive">+Rp 15.000</div>
+                    </div>
+                    <div class="list-item">
+                        <div class="item-info">
+                            <div class="transaction-icon icon-expense">OUT</div>
+                            <div>
+                                <div class="transaction-name">Print Foto Kelas</div>
+                                <div class="transaction-date">3 Agustus 2026</div>
+                            </div>
+                        </div>
+                        <div class="transaction-amount amount-negative">-Rp 75.000</div>
+                    </div>
+                    <div class="list-item">
+                        <div class="item-info">
+                            <div class="transaction-icon icon-income">IN</div>
+                            <div>
+                                <div class="transaction-name">Donasi Kegiatan</div>
+                                <div class="transaction-date">1 Agustus 2026</div>
+                            </div>
+                        </div>
+                        <div class="transaction-amount amount-positive">+Rp 100.000</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Section -->
+        <section class="features" id="fitur">
+            <div class="section-header">
+                <h2 class="section-title">Keunggulan Sistem</h2>
+                <p class="section-subtitle">Fitur lengkap untuk memudahkan pengelolaan keuangan kelas</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <div class="feature-icon-inner"></div>
+                    </div>
+                    <h3>Laporan Real-Time</h3>
+                    <p>Pantau pemasukan dan pengeluaran kapan saja dengan laporan yang selalu diperbarui</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <div class="feature-icon-inner"></div>
+                    </div>
+                    <h3>Notifikasi Otomatis</h3>
+                    <p>Ingatkan anggota yang belum membayar iuran melalui notifikasi otomatis</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <div class="feature-icon-inner"></div>
+                    </div>
+                    <h3>Aman dan Transparan</h3>
+                    <p>Seluruh anggota dapat melihat laporan, menciptakan kepercayaan bersama</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <div class="feature-icon-inner"></div>
+                    </div>
+                    <h3>Akses Multi-Device</h3>
+                    <p>Dapat diakses dari perangkat mana saja, baik ponsel maupun laptop</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA -->
+        <section class="cta-section">
+            <h2>Siap mengelola uang kas dengan cara modern?</h2>
+            <p>Bergabung sekarang dan buat pengelolaan uang kas kelas Anda menjadi lebih mudah dan terorganisir.</p>
+            <a href="#" class="cta-button">Daftar Gratis</a>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p>© 2026 UangKas Kelas. Dibuat untuk sekolah <span>UangKas</span></p>
+        </div>
+    </footer>
+</body>
+</html>

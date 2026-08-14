@@ -3,7 +3,7 @@
 class Koneksi {
   private static $local = "localhost";
   private static $username = "root";
-  private static $password = "bagas_tresna123";
+  private static $password = "";
   private static $dbname = "db_kas_kelas";
 
   /**

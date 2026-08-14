@@ -1,5 +1,13 @@
 <?php
-defined('BASE_URL') or define('BASE_URL', '/kas_system');
+if (!defined('BASE_URL')) {
+    $rootPath = realpath(dirname(__DIR__, 2));
+    $docRoot  = realpath($_SERVER['DOCUMENT_ROOT'] ?? '');
+    if ($docRoot && strpos($rootPath, $docRoot) === 0) {
+        define('BASE_URL', rtrim(str_replace('\\', '/', substr($rootPath, strlen($docRoot))), '/'));
+    } else {
+        define('BASE_URL', '');
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">
