@@ -3,7 +3,7 @@
 class Koneksi {
   private static $local = "localhost";
   private static $username = "root";
-  private static $password = "bagas_tresna123";
+  private static $password = "";
   private static $dbname = "db_kas_kelas";
 
   /**
@@ -146,13 +146,33 @@ class Koneksi {
   public static function targetMap(): array
   {
     $map = [];
-    $r = self::q("SELECT periode, target, keterangan FROM target_kas ORDER BY periode ASC");
-    if ($r) {
-      while ($row = $r->fetch_assoc()) {
-        $map[$row['periode']] = [
-          'target' => (float)$row['target'],
-          'keterangan' => $row['keterangan'] ?? null,
-        ];
+    try {
+      $r = self::q("SELECT periode, target, keterangan FROM target_kas ORDER BY periode ASC");
+      if ($r) {
+        while ($row = $r->fetch_assoc()) {
+          $map[$row['periode']] = [
+            'target' => (float)$row['target'],
+            'keterangan' => $row['keterangan'] ?? null,
+          ];
+        }
+      }
+    } catch (\Throwable $e) {
+      // Buat tabel target_kas otomatis jika belum ada di database
+      self::q("CREATE TABLE IF NOT EXISTS target_kas (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        periode VARCHAR(7) NOT NULL UNIQUE,
+        target DECIMAL(12,2) NOT NULL DEFAULT 0,
+        keterangan VARCHAR(255) DEFAULT NULL,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      )");
+      $r = self::q("SELECT periode, target, keterangan FROM target_kas ORDER BY periode ASC");
+      if ($r) {
+        while ($row = $r->fetch_assoc()) {
+          $map[$row['periode']] = [
+            'target' => (float)$row['target'],
+            'keterangan' => $row['keterangan'] ?? null,
+          ];
+        }
       }
     }
     return $map;
