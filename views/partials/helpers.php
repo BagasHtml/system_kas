@@ -49,6 +49,38 @@ if (!function_exists('status_pill')) {
         if ($status === 'lunas') {
             return '<span class="text-status lunas">Terkumpul</span>';
         }
+        if ($status === 'pending') {
+            return '<span class="text-status pending" style="background:#fff8e6;color:#b45309;border:1px solid #fef3c7;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:4px;"><i class="bi bi-clock-history"></i> Pending</span>';
+        }
         return '<span class="text-status belum">Belum Terkumpul</span>';
     }
 }
+
+if (!function_exists('get_tunggakan_siswa')) {
+    function get_tunggakan_siswa(int $siswa_id): int
+    {
+        if ($siswa_id <= 0) return 0;
+        $db = new Koneksi();
+        $target_map = $db::targetMap();
+        if (empty($target_map)) return 0;
+
+        $cur_month = date('Y-m');
+        $unpaid = 0;
+
+        $paid_res = $db::q("SELECT periode FROM pembayaran WHERE siswa_id = ? AND status = 'lunas'", [$siswa_id]);
+        $paid_periodes = [];
+        if ($paid_res) {
+            while ($r = $paid_res->fetch_assoc()) {
+                $paid_periodes[] = $r['periode'];
+            }
+        }
+
+        foreach ($target_map as $p => $v) {
+            if ($p <= $cur_month && !in_array($p, $paid_periodes)) {
+                $unpaid++;
+            }
+        }
+        return $unpaid;
+    }
+}
+

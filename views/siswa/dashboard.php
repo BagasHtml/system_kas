@@ -11,10 +11,67 @@ $siswa_id    = (int)($_SESSION['siswa_id'] ?? 0);
 $siswa_nama  = htmlspecialchars($_SESSION['nama'] ?? 'Siswa');
 $siswa_absen = htmlspecialchars($_SESSION['siswa_absen'] ?? '-');
 
+/* ===== HANDLE UPLOAD BUKTI TRANSFER ===== */
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['upload_bukti'])) {
+    if (!Koneksi::csrfCheck()) {
+        Koneksi::setFlash('error', 'Token tidak valid. Silakan coba lagi.');
+        header("Location: dashboard.php#bayar");
+        exit;
+    }
+
+    $periode = trim($_POST['periode'] ?? '');
+    $jumlah  = (float)($_POST['jumlah'] ?? 0);
+    $catatan = trim($_POST['catatan'] ?? '');
+
+    if (!preg_match('/^\d{4}-\d{2}$/', $periode) || $jumlah <= 0) {
+        Koneksi::setFlash('error', 'Pilih bulan dan jumlah pembayaran yang valid.');
+        header("Location: dashboard.php#bayar");
+        exit;
+    }
+
+    $bukti_path = null;
+    if (isset($_FILES['bukti_transfer']) && $_FILES['bukti_transfer']['error'] === UPLOAD_ERR_OK) {
+        $ext = strtolower(pathinfo($_FILES['bukti_transfer']['name'], PATHINFO_EXTENSION));
+        $allowed = ['jpg', 'jpeg', 'png', 'webp'];
+        if (in_array($ext, $allowed)) {
+            $filename = 'bukti_' . time() . '_' . rand(100, 999) . '.' . $ext;
+            $targetDir = str_replace('\\', '/', dirname(__DIR__, 2)) . '/assets/uploads/bukti_transfer/';
+            if (!is_dir($targetDir)) @mkdir($targetDir, 0777, true);
+            $targetFile = $targetDir . $filename;
+            if (move_uploaded_file($_FILES['bukti_transfer']['tmp_name'], $targetFile)) {
+                $bukti_path = 'assets/uploads/bukti_transfer/' . $filename;
+            }
+        } else {
+            Koneksi::setFlash('error', 'Format gambar harus JPG, PNG, atau WEBP.');
+            header("Location: dashboard.php#bayar");
+            exit;
+        }
+    }
+
+    if (!$bukti_path) {
+        Koneksi::setFlash('error', 'File bukti transfer wajib diupload.');
+        header("Location: dashboard.php#bayar");
+        exit;
+    }
+
+    $db::q(
+        "INSERT INTO pembayaran (siswa_id, periode, jumlah, status, tanggal_bayar, bukti_transfer, catatan)
+         VALUES (?, ?, ?, 'pending', NOW(), ?, ?)
+         ON DUPLICATE KEY UPDATE jumlah = ?, status = 'pending', tanggal_bayar = NOW(), bukti_transfer = ?, catatan = ?",
+        [$siswa_id, $periode, $jumlah, $bukti_path, $catatan, $jumlah, $bukti_path, $catatan]
+    );
+
+    Koneksi::setFlash('success', 'Konfirmasi pembayaran berhasil dikirim! Menunggu verifikasi dari bendahara.');
+    header("Location: dashboard.php#riwayat");
+    exit;
+}
+
+$tunggakan_bulan = get_tunggakan_siswa($siswa_id);
+
 $pembayaran = [];
 if ($siswa_id > 0) {
     $pembayaran = $db::q(
-        "SELECT periode, jumlah, status, tanggal_bayar
+        "SELECT id, periode, jumlah, status, tanggal_bayar, bukti_transfer, catatan
          FROM pembayaran WHERE siswa_id = ? ORDER BY id DESC LIMIT 24",
         [$siswa_id]
     )->fetch_all(MYSQLI_ASSOC);
@@ -67,12 +124,25 @@ $pengeluaran_terakhir = $db::q(
     <div class="dash-topbar">
         <div>
             <p class="student-eyebrow">Dashboard Siswa</p>
-            <h1 class="dash-title">Hai, <?= $siswa_nama ?></h1>
+            <h1 class="dash-title" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                Hai, <?= $siswa_nama ?>
+                <?php if ($tunggakan_bulan > 0): ?>
+                    <span class="badge bg-danger" style="font-size:12px;font-weight:600;padding:5px 10px;border-radius:20px;">
+                        <i class="bi bi-exclamation-triangle-fill"></i> Menunggak <?= $tunggakan_bulan ?> Bulan
+                    </span>
+                <?php else: ?>
+                    <span class="badge bg-success" style="font-size:12px;font-weight:600;padding:5px 10px;border-radius:20px;">
+                        <i class="bi bi-check-circle-fill"></i> Iuran Lunas
+                    </span>
+                <?php endif; ?>
+            </h1>
             <p class="dash-subtitle">Nomor absen <?= $siswa_absen ?> &middot; yuk pantau status kas kamu di sini</p>
         </div>
         <div class="dash-topbar-actions">
         </div>
     </div>
+
+    <?php Koneksi::renderFlash(); ?>
 
     <div class="dash-banner cols-3">
         <?php foreach ($banner as $b): ?>
@@ -129,6 +199,50 @@ $pengeluaran_terakhir = $db::q(
                     </div>
                     <div class="dash-pay-hint">Scan kode di atas setelah transfer</div>
                 </div>
+            </div>
+
+            <div class="dash-pay-confirm" style="margin-top:20px;padding-top:20px;border-top:1px dashed var(--border);">
+                <div style="font-weight:700;font-size:15px;margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+                    <i class="bi bi-upload" style="color:var(--accent);"></i> Konfirmasi &amp; Upload Bukti Pembayaran
+                </div>
+                <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;">
+                    Sudah transfer via DANA atau QRIS? Upload foto bukti transfer di bawah agar bendahara dapat memverifikasi.
+                </p>
+                <form action="dashboard.php" method="POST" enctype="multipart/form-data" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <?= Koneksi::csrfField() ?>
+                    <input type="hidden" name="upload_bukti" value="1">
+                    <div>
+                        <label class="form-label" style="font-size:12px;font-weight:600;">Bulan iuran yang dibayar</label>
+                        <select name="periode" class="form-select form-select-sm" required style="border-radius:8px;">
+                            <?php if (empty($target_map)): ?>
+                                <option value="<?= date('Y-m') ?>"><?= Koneksi::periodeLabel(date('Y-m')) ?></option>
+                            <?php else: ?>
+                                <?php foreach ($target_map as $p => $info): ?>
+                                    <option value="<?= $p ?>" <?= $p === date('Y-m') ? 'selected' : '' ?>>
+                                        <?= Koneksi::periodeLabel($p) ?> (<?= rupiah($info['target']) ?>)
+                                    </option>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label" style="font-size:12px;font-weight:600;">Jumlah yang ditransfer (Rp)</label>
+                        <input type="number" name="jumlah" class="form-control form-control-sm" placeholder="20000" min="1000" required style="border-radius:8px;">
+                    </div>
+                    <div style="grid-column: 1 / -1;">
+                        <label class="form-label" style="font-size:12px;font-weight:600;">Upload Foto Bukti Transfer (JPG/PNG/WEBP)</label>
+                        <input type="file" name="bukti_transfer" class="form-control form-control-sm" accept="image/*" required style="border-radius:8px;">
+                    </div>
+                    <div style="grid-column: 1 / -1;">
+                        <label class="form-label" style="font-size:12px;font-weight:600;">Catatan / Nama Rekening Pengirim (Opsional)</label>
+                        <input type="text" name="catatan" class="form-control form-control-sm" placeholder="Contoh: Transfer dari DANA a.n Ahmad" style="border-radius:8px;">
+                    </div>
+                    <div style="grid-column: 1 / -1;margin-top:4px;">
+                        <button type="submit" class="dash-btn dash-btn-primary" style="width:100%;justify-content:center;">
+                            <i class="bi bi-send-check"></i> Kirim Konfirmasi Pembayaran
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
 
@@ -218,6 +332,7 @@ $pengeluaran_terakhir = $db::q(
                                 <th>Jumlah</th>
                                 <th>Tanggal Bayar</th>
                                 <th>Status</th>
+                                <th style="text-align:center;">Bukti</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -229,6 +344,19 @@ $pengeluaran_terakhir = $db::q(
                                     <td><span class="dash-amount"><?= rupiah((float)$p['jumlah']) ?></span></td>
                                     <td><?= $p['tanggal_bayar'] ? date('d/m/Y', strtotime($p['tanggal_bayar'])) : '-' ?></td>
                                     <td><?= status_pill($p['status']) ?></td>
+                                    <td style="text-align:center;">
+                                        <?php if (!empty($p['bukti_transfer'])): ?>
+                                            <button class="dash-btn dash-btn-light" style="padding:4px 8px;font-size:12px;"
+                                                    data-bs-toggle="modal" data-bs-target="#modalBukti"
+                                                    data-img="<?= BASE_URL . '/' . htmlspecialchars($p['bukti_transfer']) ?>"
+                                                    data-title="Bukti Transfer <?= htmlspecialchars(Koneksi::periodeLabel($p['periode'])) ?>"
+                                                    data-catatan="<?= htmlspecialchars($p['catatan'] ?? '') ?>">
+                                                <i class="bi bi-image"></i> Lihat
+                                            </button>
+                                        <?php else: ?>
+                                            <span style="color:var(--text-muted);font-size:12px;">-</span>
+                                        <?php endif; ?>
+                                    </td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -236,6 +364,31 @@ $pengeluaran_terakhir = $db::q(
                 </div>
             <?php endif; ?>
         </div>
+
+        <div class="modal fade" id="modalBukti" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h6 class="modal-title" id="modalBuktiTitle">Bukti Transfer</h6>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <img id="modalBuktiImg" src="" alt="Bukti Transfer" style="max-width:100%;max-height:400px;border-radius:8px;object-fit:contain;">
+                        <p id="modalBuktiCatatan" style="margin-top:12px;font-size:13px;color:var(--text-secondary);"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+        document.getElementById('modalBukti')?.addEventListener('show.bs.modal', function (e) {
+            const btn = e.relatedTarget;
+            document.getElementById('modalBuktiTitle').textContent = btn?.dataset.title || 'Bukti Transfer';
+            document.getElementById('modalBuktiImg').src = btn?.dataset.img || '';
+            const cat = btn?.dataset.catatan;
+            document.getElementById('modalBuktiCatatan').textContent = cat ? 'Catatan: ' + cat : '';
+        });
+        </script>
 
         <div class="dash-card">
             <div class="dash-card-head">

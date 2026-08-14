@@ -52,6 +52,13 @@ $ada_target = $total_target > 0;
 $belum_bayar = $ada_target
     ? max(0, $total_target - (float)$sum['pemasukan'])
     : (float)$sum['belum_bayar'];
+
+$jumlah_siswa = Koneksi::jumlahSiswa();
+$kas_per_siswa = null;
+if ($ada_target && $target_map) {
+    $latest_tp = max(array_keys($target_map));
+    $kas_per_siswa = (float)$target_map[$latest_tp]['per_siswa'];
+}
 ?>
 
 <div class="main-content dash-page">
@@ -61,8 +68,11 @@ $belum_bayar = $ada_target
             <p class="dash-subtitle">Rekap pembayaran dan saldo kas kelas</p>
         </div>
         <div class="dash-topbar-actions">
+            <a href="export_excel.php" class="dash-btn dash-btn-light">
+                <i class="bi bi-file-earmark-excel"></i> Ekspor Excel / CSV
+            </a>
             <button class="dash-btn dash-btn-primary" onclick="window.print()">
-                <?= ic('<path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/>', 15) ?> Cetak
+                <?= ic('<path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/>', 15) ?> Cetak Laporan
             </button>
         </div>
     </div>
@@ -74,7 +84,7 @@ $belum_bayar = $ada_target
             ['label' => 'Pengeluaran', 'value' => rupiah($pengeluaran_total), 'tone' => 'danger'],
             ['label' => 'Saldo Kas', 'value' => rupiah($saldo), 'tone' => 'accent'],
             ['label' => 'Belum Terkumpul', 'value' => rupiah($belum_bayar), 'tone' => 'warn'],
-            ['label' => 'Target Kas', 'value' => rupiah($total_target), 'tone' => 'info'],
+            ['label' => 'Target Kas', 'value' => rupiah($total_target), 'tone' => 'info', 'note' => $ada_target && $kas_per_siswa !== null ? rupiah($kas_per_siswa) . ' x ' . $jumlah_siswa . ' siswa' : 'Belum ditetapkan'],
         ];
         foreach ($kpis as $k) {
             echo kpi($k);
@@ -88,9 +98,14 @@ $belum_bayar = $ada_target
                 <div class="dash-card-title">Matriks Pembayaran per Siswa</div>
                 <div class="dash-card-sub"><?= count($siswa) ?> siswa &times; <?= count($periode_list) ?> bulan</div>
             </div>
-            <button class="dash-btn dash-btn-light" onclick="window.print()">
-                <?= ic('<path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/>', 15) ?> Cetak
-            </button>
+            <div style="display:flex;gap:8px;">
+                <a href="export_excel.php" class="dash-btn dash-btn-light">
+                    <i class="bi bi-file-earmark-excel"></i> Ekspor CSV
+                </a>
+                <button class="dash-btn dash-btn-light" onclick="window.print()">
+                    <?= ic('<path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/>', 15) ?> Cetak
+                </button>
+            </div>
         </div>
         <div class="dash-table-wrap">
             <table class="dash-table lap-matrix">

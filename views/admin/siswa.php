@@ -1,252 +1,435 @@
-<?php
-if (session_status() === PHP_SESSION_NONE) session_start();
-if (!isset($_SESSION['username'])) {
-    header("Location: login.php");
-    exit;
-}
-
-$title = 'Data Siswa - Admin';
-$active = 'siswa';
-include '../partials/header.php';
-include '../partials/admin_sidebar.php';
-include '../partials/helpers.php';
-include_once '../../database/db.php';
-
-$db = new Koneksi();
-
-$cari = trim($_GET['cari'] ?? '');
-$back = $cari !== '' ? '?cari=' . urlencode($cari) : '';
-
-/* ===== HAPUS ===== */
-if (isset($_POST['hapus'])) {
-    if (!Koneksi::csrfCheck()) {
-        Koneksi::setFlash('error', 'Token keamanan tidak valid. Muat ulang halaman lalu coba lagi.');
-        header("Location: siswa.php" . $back);
-        exit;
-    }
-    $id = (int)$_POST['hapus'];
-    if ($id > 0) {
-        $db::q("DELETE FROM siswa WHERE id = ?", [$id]);
-        Koneksi::setFlash('success', 'Data siswa berhasil dihapus.');
-    }
-    header("Location: siswa.php" . $back);
-    exit;
-}
-
-/* ===== TAMBAH / EDIT ===== */
-if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
-    if (!Koneksi::csrfCheck()) {
-        Koneksi::setFlash('error', 'Token keamanan tidak valid. Muat ulang halaman lalu coba lagi.');
-        header("Location: siswa.php" . $back);
-        exit;
-    }
-    $id = (int)($_POST['id'] ?? 0);
-    $nama = trim($_POST['nama'] ?? '');
-    $nomor_absen = (int)($_POST['nomor_absen'] ?? 0);
-
-    if ($nama === '' || $nomor_absen <= 0) {
-        Koneksi::setFlash('error', 'Nama dan nomor absen wajib diisi.');
-        header("Location: siswa.php" . $back);
-        exit;
+<!-- ============ CSS (bisa ditaruh di file CSS / <style> halaman) ============ -->
+<style>
+    .pay-card {
+        max-width: 720px;
+        margin: 24px auto;
+        padding: 28px;
+        background: var(--card, #fff);
+        border: 1px solid var(--border, #e6eaf2);
+        border-radius: 20px;
+        box-shadow: 0 12px 40px rgba(20, 30, 55, .08);
     }
 
-    $dup = $db::q("SELECT id FROM siswa WHERE nomor_absen = ? AND id <> ? LIMIT 1", [$nomor_absen, $id]);
-    if ($dup && $dup->num_rows > 0) {
-        Koneksi::setFlash('error', 'Nomor absen ' . $nomor_absen . ' sudah dipakai siswa lain.');
-        header("Location: siswa.php" . $back);
-        exit;
+    .pay-head {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        margin-bottom: 24px;
     }
 
-    if ($id > 0) {
-        $db::q("UPDATE siswa SET nama = ?, nomor_absen = ? WHERE id = ?", [$nama, $nomor_absen, $id]);
-        Koneksi::setFlash('success', 'Data siswa berhasil diperbarui.');
-    } else {
-        $db::q("INSERT INTO siswa (nama, nomor_absen) VALUES (?, ?)", [$nama, $nomor_absen]);
-        Koneksi::setFlash('success', 'Data siswa berhasil ditambahkan.');
+    .pay-head-icon {
+        flex: 0 0 auto;
+        width: 46px;
+        height: 46px;
+        border-radius: 14px;
+        background: var(--accent-soft, rgba(10, 160, 110, .12));
+        color: var(--accent, #0aa06e);
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
-    header("Location: siswa.php" . $back);
-    exit;
-}
 
-/* ===== TAMPIL ===== */
-$per_page = 10;
-$page = max(1, (int)($_GET['hal'] ?? 1));
+    .pay-head h2 {
+        margin: 0 0 4px;
+        font-size: 19px;
+        font-weight: 700;
+        color: var(--text, #1b2434);
+    }
 
-$where = '';
-$params = [];
-if ($cari !== '') {
-    $where = " WHERE nama LIKE ? OR nomor_absen LIKE ?";
-    $params = ["%$cari%", "%$cari%"];
-}
+    .pay-head p {
+        margin: 0;
+        font-size: 13.5px;
+        line-height: 1.55;
+        color: var(--text-secondary, #5c6675);
+    }
 
-$jml = $db::q("SELECT COUNT(*) AS jml FROM siswa" . $where, $params)->fetch_assoc();
-$total_data = (int)($jml['jml'] ?? 0);
-$total_pages = max(1, (int)ceil($total_data / $per_page));
-$page = min($page, $total_pages);
-$offset = ($page - 1) * $per_page;
+    .pay-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
 
-$res = $db::q(
-    "SELECT * FROM siswa" . $where . " ORDER BY nomor_absen ASC LIMIT ? OFFSET ?",
-    array_merge($params, [$per_page, $offset])
-);
-$siswa = $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
+    @media(max-width:600px) {
+        .pay-grid {
+            grid-template-columns: 1fr;
+        }
+    }
 
-$start_item = $total_data === 0 ? 0 : $offset + 1;
-$end_item = min($offset + count($siswa), $total_data);
-$pg_query = http_build_query(['cari' => $cari]);
-?>
+    .pay-field {
+        margin-bottom: 18px;
+    }
 
-<div class="main-content dash-page">
-    <div class="dash-topbar">
+    .pay-field>label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text, #1b2434);
+    }
+
+    .pay-field .opt {
+        color: var(--text-muted, #9aa3b0);
+        font-weight: 500;
+    }
+
+    .pay-input,
+    .pay-select {
+        width: 100%;
+        padding: 12px 14px;
+        outline: none;
+        border: 1.5px solid var(--border, #e2e7ef);
+        border-radius: 12px;
+        background: #fbfcfe;
+        font-size: 14px;
+        color: var(--text, #1b2434);
+        transition: border-color .15s, box-shadow .15s, background .15s;
+    }
+
+    .pay-input:focus,
+    .pay-select:focus {
+        border-color: var(--accent, #0aa06e);
+        background: #fff;
+        box-shadow: 0 0 0 4px var(--accent-soft, rgba(10, 160, 110, .14));
+    }
+
+    .pay-input::placeholder {
+        color: var(--text-muted, #a3abb8);
+    }
+
+    .select-wrap {
+        position: relative;
+    }
+
+    .select-wrap>svg {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        pointer-events: none;
+        color: var(--text-muted);
+    }
+
+    .pay-select {
+        appearance: none;
+        -webkit-appearance: none;
+        padding-right: 38px;
+        cursor: pointer;
+    }
+
+    .amount-wrap {
+        position: relative;
+    }
+
+    .amount-wrap .prefix {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--text-muted);
+    }
+
+    .amount-wrap .pay-input {
+        padding-left: 44px;
+        font-weight: 600;
+    }
+
+    /* ---- dropzone upload ---- */
+    .dropzone {
+        display: block;
+        padding: 22px;
+        text-align: center;
+        cursor: pointer;
+        border: 1.5px dashed #cfd6e2;
+        border-radius: 14px;
+        background: #fafbfe;
+        transition: border-color .15s, background .15s;
+    }
+
+    .dropzone:hover,
+    .dropzone.drag {
+        border-color: var(--accent);
+        background: var(--accent-soft, rgba(10, 160, 110, .08));
+    }
+
+    .dz-icon {
+        width: 44px;
+        height: 44px;
+        margin: 0 auto 10px;
+        border-radius: 12px;
+        background: #fff;
+        border: 1px solid var(--border, #e2e7ef);
+        color: var(--accent, #0aa06e);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(20, 30, 55, .06);
+    }
+
+    .dz-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text, #1b2434);
+    }
+
+    .dz-title span {
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+
+    .dz-hint {
+        margin-top: 4px;
+        font-size: 12px;
+        color: var(--text-muted);
+    }
+
+    .dz-preview {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        text-align: left;
+    }
+
+    .dz-preview img {
+        width: 64px;
+        height: 64px;
+        object-fit: cover;
+        border-radius: 10px;
+        border: 1px solid var(--border, #e2e7ef);
+    }
+
+    .dz-meta {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .dz-name {
+        font-size: 13.5px;
+        font-weight: 600;
+        color: var(--text, #1b2434);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .dz-size {
+        margin-top: 2px;
+        font-size: 12px;
+        color: var(--text-muted);
+    }
+
+    .dz-remove {
+        flex: 0 0 auto;
+        width: 32px;
+        height: 32px;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        background: #fdecec;
+        color: var(--danger, #e5484d);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .dz-remove:hover {
+        background: #fbdcdc;
+    }
+
+    .dz-error {
+        margin-top: 8px;
+        font-size: 12.5px;
+        font-weight: 600;
+        color: var(--danger, #e5484d);
+    }
+
+    .pay-submit {
+        width: 100%;
+        padding: 14px 18px;
+        border: none;
+        border-radius: 13px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        background: linear-gradient(135deg, var(--accent, #0aa06e), #078a5e);
+        color: #fff;
+        font-size: 15px;
+        font-weight: 700;
+        box-shadow: 0 8px 20px rgba(10, 160, 110, .28);
+        transition: transform .15s, box-shadow .15s, filter .15s;
+    }
+
+    .pay-submit:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 24px rgba(10, 160, 110, .34);
+        filter: brightness(1.03);
+    }
+
+    .pay-submit:active {
+        transform: translateY(0);
+    }
+</style>
+
+<!-- ============ FORM ============ -->
+<form class="pay-card" method="post" enctype="multipart/form-data" action="">
+    <?= Koneksi::csrfField() ?>
+
+    <div class="pay-head">
+        <div class="pay-head-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 15V4" />
+                <path d="m8 8 4-4 4 4" />
+                <path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" />
+            </svg>
+        </div>
         <div>
-            <h1 class="dash-title">Data Siswa</h1>
-            <p class="dash-subtitle">Kelola data siswa kelas</p>
-        </div>
-        <div class="dash-topbar-actions">
-            <button class="dash-btn dash-btn-primary" data-bs-toggle="modal" data-bs-target="#modalSiswa">
-                <?= ic('<path d="M12 5v14M5 12h14"/>', 15) ?> Tambah Siswa
-            </button>
+            <h2>Konfirmasi &amp; Upload Bukti Pembayaran</h2>
+            <p>Sudah transfer via DANA atau QRIS? Upload foto bukti transfer di bawah agar bendahara dapat
+                memverifikasi.</p>
         </div>
     </div>
 
-    <?php Koneksi::renderFlash(); ?>
-
-    <div class="dash-card">
-        <div class="dash-card-head">
-            <div>
-                <div class="dash-card-title">Daftar Siswa</div>
-                <div class="dash-card-sub"><?= $total_data ?> siswa terdaftar</div>
+    <div class="pay-grid">
+        <div class="pay-field" style="margin-bottom:0;">
+            <label for="bulan">Bulan iuran yang dibayar</label>
+            <div class="select-wrap">
+                <select class="pay-select" id="bulan" name="bulan" required>
+                    <!-- opsi bulan dari PHP Anda -->
+                    <option value="2026-08" selected>Agustus 2026</option>
+                </select>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m6 9 6 6 6-6" />
+                </svg>
             </div>
-            <form class="table-search" method="get">
-                <input type="search" name="cari" value="<?= htmlspecialchars($cari) ?>" placeholder="Cari nama atau no. absen">
-                <button type="submit">Cari</button>
-                <?php if ($cari !== ''): ?>
-                    <a class="table-search-clear" href="siswa.php" title="Reset">×</a>
-                <?php endif; ?>
-            </form>
         </div>
-        <div class="dash-table-wrap">
-            <table class="dash-table">
-                <thead>
-                    <tr>
-                        <th style="width:60px;">No</th>
-                        <th>Nama Siswa</th>
-                        <th style="width:120px;">Nomor Absen</th>
-                        <th style="width:160px;">Tanggal Daftar</th>
-                        <th style="text-align:center;width:130px;">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (empty($siswa)): ?>
-                        <tr>
-                            <td colspan="5">
-                                <div class="dash-empty">
-                                    <div class="t"><?= $cari !== '' ? 'Tidak ada hasil untuk "' . htmlspecialchars($cari) . '"' : 'Belum ada data siswa' ?></div>
-                                    <div class="s"><?= $cari === '' ? 'Tambah siswa melalui tombol Tambah Siswa' : 'Coba kata kunci lain' ?></div>
-                                </div>
-                            </td>
-                        </tr>
-                    <?php else: ?>
-                        <?php $no = $offset + 1; ?>
-                        <?php foreach ($siswa as $s): ?>
-                            <tr>
-                                <td style="color:var(--text-muted);"><?= $no++ ?></td>
-                                <td>
-                                    <div class="dash-cell-name">
-                                        <div class="dash-cell-avatar" style="background:var(--accent-soft);color:var(--accent);">
-                                            <?= strtoupper(substr($s['nama'], 0, 1)) ?>
-                                        </div>
-                                        <span class="nm"><?= htmlspecialchars($s['nama']) ?></span>
-                                    </div>
-                                </td>
-                                <td><span class="dash-amount"><?= (int)$s['nomor_absen'] ?></span></td>
-                                <td style="color:var(--text-secondary);"><?= date('d/m/Y', strtotime($s['created_at'])) ?></td>
-                                <td style="text-align:center;">
-                                    <div style="display:flex;gap:6px;justify-content:center;">
-                                        <button class="dash-btn dash-btn-light" style="padding:6px 12px;"
-                                                data-bs-toggle="modal" data-bs-target="#modalSiswa"
-                                                data-id="<?= $s['id'] ?>"
-                                                data-nama="<?= htmlspecialchars($s['nama']) ?>"
-                                                data-absen="<?= $s['nomor_absen'] ?>">
-                                            <i class="bi bi-pencil"></i>
-                                        </button>
-                                        <form method="post" action="siswa.php<?= $back ?>" style="display:inline;"
-                                              onsubmit="return confirmDelete(event, 'Yakin hapus <?= htmlspecialchars($s['nama']) ?>? Pembayaran terkait ikut terhapus.')">
-                                            <?= Koneksi::csrfField() ?>
-                                            <input type="hidden" name="hapus" value="<?= $s['id'] ?>">
-                                            <button type="submit" class="dash-btn dash-btn-light" style="padding:6px 12px;color:var(--danger);">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </tbody>
-            </table>
-        </div>
-        <?php if ($total_data > 0): ?>
-            <div class="dash-pagination">
-                <span class="dash-pg-info">
-                    Menampilkan <?= $start_item ?>–<?= $end_item ?> dari <?= $total_data ?> siswa
-                </span>
-                <?php include '../partials/pagination.php'; ?>
+        <div class="pay-field" style="margin-bottom:0;">
+            <label for="jumlahTampil">Jumlah yang ditransfer</label>
+            <div class="amount-wrap">
+                <span class="prefix">Rp</span>
+                <input class="pay-input" type="text" id="jumlahTampil" inputmode="numeric" value="20000"
+                    autocomplete="off">
+                <input type="hidden" id="jumlah" name="jumlah" value="20000">
             </div>
-        <?php endif; ?>
-    </div>
-</div>
-
-<div class="modal fade" id="modalSiswa" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form action="" method="POST">
-                <?= Koneksi::csrfField() ?>
-                <input type="hidden" name="id" id="edit_id">
-                <div class="modal-header">
-                    <h6 class="modal-title" id="modalTitle">Tambah Siswa</h6>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Nama Lengkap</label>
-                        <input type="text" class="form-control" id="nama" name="nama" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Nomor Absen</label>
-                        <input type="number" class="form-control" id="nomor_absen" name="nomor_absen" min="1" required>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="dash-btn dash-btn-light" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="dash-btn dash-btn-primary">Simpan</button>
-                </div>
-            </form>
         </div>
     </div>
-</div>
 
+    <div class="pay-field" style="margin-top:18px;">
+        <label>Upload Foto Bukti Transfer</label>
+        <label class="dropzone" id="dropzone" for="bukti">
+            <input type="file" id="bukti" name="bukti" accept=".jpg,.jpeg,.png,.webp" hidden required>
+            <div id="dzIdle">
+                <div class="dz-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="3" />
+                        <circle cx="9" cy="9" r="2" />
+                        <path d="m21 15-4-4-8 8" />
+                    </svg>
+                </div>
+                <div class="dz-title">Klik untuk pilih file <span>atau seret &amp; letakkan</span></div>
+                <div class="dz-hint">JPG, PNG, WEBP • maks 5 MB</div>
+            </div>
+            <div class="dz-preview" id="dzPreview" hidden>
+                <img id="dzImg" alt="Preview bukti">
+                <div class="dz-meta">
+                    <div class="dz-name" id="dzName"></div>
+                    <div class="dz-size" id="dzSize"></div>
+                </div>
+                <button type="button" class="dz-remove" id="dzRemove" title="Hapus file">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round">
+                        <path d="M18 6 6 18M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+        </label>
+        <div class="dz-error" id="dzError" hidden></div>
+    </div>
+
+    <div class="pay-field">
+        <label for="catatan">Catatan / Nama Rekening Pengirim <span class="opt">(opsional)</span></label>
+        <input class="pay-input" type="text" id="catatan" name="catatan" maxlength="150"
+            placeholder="Contoh: Transfer dari DANA a.n Ahmad">
+    </div>
+
+    <button type="submit" class="pay-submit">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="m22 2-7 20-4-9-9-4Z" />
+            <path d="M22 2 11 13" />
+        </svg>
+        Kirim Konfirmasi Pembayaran
+    </button>
+</form>
+
+<!-- ============ JS ============ -->
 <script>
-document.getElementById('modalSiswa')?.addEventListener('show.bs.modal', (e) => {
-    const btn = e.relatedTarget;
-    const id = btn?.dataset.id;
-    if (id) {
-        document.getElementById('modalTitle').textContent = 'Edit Siswa';
-        document.getElementById('edit_id').value = id;
-        document.getElementById('nama').value = btn.dataset.nama || '';
-        document.getElementById('nomor_absen').value = btn.dataset.absen || '';
-    } else {
-        document.getElementById('modalTitle').textContent = 'Tambah Siswa';
-        document.getElementById('edit_id').value = '';
-        document.getElementById('nama').value = '';
-        document.getElementById('nomor_absen').value = '';
-    }
-});
-window.addEventListener('DOMContentLoaded', () => {
-    if (new URLSearchParams(window.location.search).has('tambah')) {
-        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalSiswa')).show();
-    }
-});
-</script>
+    (function () {
+        /* --- format ribuan pada jumlah (backend tetap terima angka polos) --- */
+        var tampil = document.getElementById('jumlahTampil');
+        var hidden = document.getElementById('jumlah');
+        function fmt(n) { return n.replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+        tampil.addEventListener('input', function () {
+            var raw = tampil.value.replace(/\D/g, '').slice(0, 9);
+            hidden.value = raw;
+            tampil.value = raw ? fmt(raw) : '';
+        });
+        hidden.value = tampil.value.replace(/\D/g, '');
+        tampil.value = hidden.value ? fmt(hidden.value) : '';
 
-<?php include '../partials/footer.php'; ?>
+        /* --- dropzone upload --- */
+        var input = document.getElementById('bukti');
+        var zone = document.getElementById('dropzone');
+        var idle = document.getElementById('dzIdle');
+        var prev = document.getElementById('dzPreview');
+        var img = document.getElementById('dzImg');
+        var nm = document.getElementById('dzName');
+        var sz = document.getElementById('dzSize');
+        var err = document.getElementById('dzError');
+        var MAX = 5 * 1024 * 1024;
+        var OK = ['image/jpeg', 'image/png', 'image/webp'];
+
+        function humanSize(b) {
+            return b >= 1048576 ? (b / 1048576).toFixed(2) + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB';
+        }
+        function handleFile(f) {
+            err.hidden = true;
+            if (!f) return;
+            if (OK.indexOf(f.type) === -1) { err.textContent = 'Format harus JPG, PNG, atau WEBP.'; err.hidden = false; input.value = ''; return; }
+            if (f.size > MAX) { err.textContent = 'Ukuran maksimal 5 MB.'; err.hidden = false; input.value = ''; return; }
+            nm.textContent = f.name;
+            sz.textContent = humanSize(f.size);
+            img.src = URL.createObjectURL(f);
+            idle.hidden = true;
+            prev.hidden = false;
+        }
+
+        input.addEventListener('change', function () { handleFile(input.files[0]); });
+
+        document.getElementById('dzRemove').addEventListener('click', function (e) {
+            e.preventDefault(); e.stopPropagation();
+            input.value = '';
+            prev.hidden = true;
+            idle.hidden = false;
+            err.hidden = true;
+        });
+
+        ['dragenter', 'dragover'].forEach(function (ev) {
+            zone.addEventListener(ev, function (e) { e.preventDefault(); zone.classList.add('drag'); });
+        });
+        ['dragleave', 'drop'].forEach(function (ev) {
+            zone.addEventListener(ev, function (e) { e.preventDefault(); zone.classList.remove('drag'); });
+        });
+        zone.addEventListener('drop', function (e) {
+            if (e.dataTransfer.files.length) {
+                input.files = e.dataTransfer.files;
+                handleFile(input.files[0]);
+            }
+        });
+    })();
+</script>

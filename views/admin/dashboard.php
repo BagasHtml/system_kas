@@ -14,6 +14,8 @@ $db = new Koneksi();
 
 $total_siswa = (int)($db::q("SELECT COUNT(*) c FROM siswa")->fetch_assoc()['c'] ?? 0);
 
+$pending_count = (int)($db::q("SELECT COUNT(*) c FROM pembayaran WHERE status = 'pending'")->fetch_assoc()['c'] ?? 0);
+
 $agg = $db::q(
     "SELECT
         COUNT(CASE WHEN status = 'lunas' THEN 1 END) AS lunas_count,
@@ -42,6 +44,12 @@ if ($ada_target) {
     $belum = max(0, $total_target - $pemasukan);
 }
 
+$kas_per_siswa = null;
+if ($ada_target && $target_map) {
+    $latest_tp = max(array_keys($target_map));
+    $kas_per_siswa = (float)$target_map[$latest_tp]['per_siswa'];
+}
+
 $pct_lunas = $ada_target
     ? min(100, round($pemasukan / $total_target * 100))
     : min(100, round($pemasukan / max(1, $pemasukan + $belum) * 100));
@@ -50,10 +58,16 @@ $rata_rata = $total_siswa > 0 ? round($pemasukan / $total_siswa) : 0;
 $recent = $db::q(
     "SELECT p.periode, p.jumlah, p.status, p.tanggal_bayar, s.nama, s.nomor_absen
      FROM pembayaran p
-     JOIN siswa s ON s.id = p.siswa_id
-     ORDER BY COALESCE(p.tanggal_bayar, p.created_at) DESC, p.id DESC
-     LIMIT 6"
+     INNER JOIN siswa s ON s.id = p.siswa_id
+     ORDER BY p.id DESC LIMIT 5"
 )->fetch_all(MYSQLI_ASSOC);
+
+$kpis = [
+    ['label' => 'Total Pemasukan Kas', 'value' => rupiah($pemasukan), 'note' => 'dari ' . $lunas_count . ' pembayaran lunas', 'tone' => 'success'],
+    ['label' => 'Total Pengeluaran Kas', 'value' => rupiah($pengeluaran_total), 'note' => $pengeluaran_count . ' transaksi keluar', 'tone' => 'danger'],
+    ['label' => 'Sisa Saldo Kas Kelas', 'value' => rupiah($saldo), 'note' => $saldo >= 0 ? 'Saldo kas aman' : 'Perlu evaluasi kas', 'tone' => 'accent'],
+    ['label' => 'Total Siswa', 'value' => (string)$total_siswa, 'note' => 'rata-rata ' . rupiah($rata_rata) . '/siswa', 'tone' => 'info'],
+];
 
 $chart = array_fill(1, 12, 0.0);
 foreach ($db::q(
@@ -70,7 +84,6 @@ $chart_any = array_sum($chart) > 0;
 $bulan = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 $username = htmlspecialchars($_SESSION['username'] ?? 'Admin');
 
-/* Trend bulan ini vs bulan lalu */
 $cur_m = (int)date('n');
 $prev_m = $cur_m - 1;
 $cur_val = $chart[$cur_m];
@@ -117,11 +130,26 @@ $banner = [
         <div class="dash-topbar-actions">
             <div class="dash-datechip">
                 <?= ic('<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>', 14) ?>
-                <?= date('d M Y') ?>
-            </div>
+                <div class="dash-user">
+            <span class="dash-username"><?= $username ?></span>
             <div class="dash-avatar"><?= strtoupper(substr($username, 0, 1)) ?></div>
         </div>
     </div>
+
+    <?php if ($pending_count > 0): ?>
+        <div class="alert alert-warning" style="border-radius:12px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding:14px 18px;background:#fffcf5;border:1px solid #fef3c7;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <i class="bi bi-bell-fill" style="font-size:22px;color:#b45309;"></i>
+                <div>
+                    <b style="color:#92400e;">Ada <?= $pending_count ?> pembayaran masuk dari siswa yang perlu verifikasi!</b>
+                    <div style="font-size:12px;color:#b45309;">Siswa telah mengirim bukti transfer dan menunggu persetujuan Anda.</div>
+                </div>
+            </div>
+            <a href="pembayaran.php" class="dash-btn dash-btn-primary" style="background:#b45309;border-color:#b45309;padding:7px 16px;font-size:12px;white-space:nowrap;">
+                <i class="bi bi-check2-square"></i> Ke Halaman Verifikasi
+            </a>
+        </div>
+    <?php endif; ?>
 
     <div class="dash-banner">
         <?php foreach ($banner as $b): ?>
@@ -187,7 +215,7 @@ $banner = [
                 <div class="dash-card-head">
                     <div>
                         <div class="dash-card-title">Status Pembayaran</div>
-                        <div class="dash-card-sub"><?= $ada_target ? 'Perbandingan terhadap target kas kelas' : 'Perbandingan nominal kas' ?></div>
+                        <div class="dash-card-sub"><?= $ada_target && $kas_per_siswa !== null ? 'Target kelas = ' . rupiah($kas_per_siswa) . ' per siswa' : 'Perbandingan nominal kas' ?></div>
                     </div>
                 </div>
 
@@ -320,6 +348,10 @@ $banner = [
                 <div style="display:flex;justify-content:space-between;align-items:center;">
                     <span style="color:var(--text-secondary);">Kesepakatan Kas Kelas</span>
                     <span style="font-weight:700;"><?= $ada_target ? rupiah($total_target) : 'Belum ditetapkan' ?></span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <span style="color:var(--text-secondary);">Kas per Siswa</span>
+                    <span style="font-weight:700;"><?= $kas_per_siswa !== null ? rupiah($kas_per_siswa) . ' x ' . $total_siswa . ' siswa' : 'Belum ditetapkan' ?></span>
                 </div>
                 <div style="display:flex;justify-content:space-between;align-items:center;">
                     <span style="color:var(--text-secondary);">Total Pengeluaran</span>
