@@ -116,7 +116,7 @@ $banner = [
                             <?php else: ?>
                                 <?php foreach ($target_map as $p => $info): ?>
                                     <option value="<?= $p ?>" <?= $p === date('Y-m') ? 'selected' : '' ?>>
-                                        <?= Koneksi::periodeLabel($p) ?> (<?= rupiah($info['target']) ?>)
+                                        <?= Koneksi::periodeLabel($p) ?> (<?= rupiah(Koneksi::totalTargetPeriod((float)$info['per_siswa'])) ?>)
                                     </option>
                                 <?php endforeach; ?>
                             <?php endif; ?>

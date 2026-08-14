@@ -1,3 +1,7 @@
+<?php
+if (session_status() === PHP_SESSION_NONE) session_start();
+$isAdminLogin = isset($_SESSION['username']);
+?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -564,14 +568,14 @@
           <p class="text-xs text-neutral-500">Bendahara kas sekolah</p>
         </div>
       </div>
-      <form onsubmit="doLogin(event,'admin')" class="space-y-4">
+      <form id="admForm" action="function/login.php" method="POST" onsubmit="doLogin(event,'admin')" class="space-y-4">
         <div>
           <label class="block text-xs font-semibold text-neutral-400 mb-1.5">Username</label>
-          <input type="text" id="admUser" placeholder="admin" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm placeholder-neutral-600 focus:outline-none focus:border-green-500 transition-colors">
+          <input type="text" id="admUser" name="username" placeholder="admin" required class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm placeholder-neutral-600 focus:outline-none focus:border-green-500 transition-colors">
         </div>
         <div>
           <label class="block text-xs font-semibold text-neutral-400 mb-1.5">Password</label>
-          <input type="password" id="admPass" placeholder="••••••" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm placeholder-neutral-600 focus:outline-none focus:border-green-500 transition-colors">
+          <input type="password" id="admPass" name="password" placeholder="••••••" required class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm placeholder-neutral-600 focus:outline-none focus:border-green-500 transition-colors">
         </div>
         <button type="submit" class="w-full bg-green-600 text-white font-semibold py-3 rounded-xl text-sm btn-glow">Masuk</button>
       </form>
@@ -594,18 +598,18 @@
           <p class="text-xs text-neutral-500">Cek pembayaran kas</p>
         </div>
       </div>
-      <form onsubmit="doLogin(event,'siswa')" class="space-y-4">
+      <form id="swForm" action="function/search.php" method="POST" class="space-y-4">
         <div>
-          <label class="block text-xs font-semibold text-neutral-400 mb-1.5">NIS</label>
-          <input type="text" id="swNis" placeholder="2024001" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm placeholder-neutral-600 focus:outline-none focus:border-green-500 transition-colors">
+          <label class="block text-xs font-semibold text-neutral-400 mb-1.5">Nama</label>
+          <input type="text" name="nama" placeholder="Masukkan nama lengkap" required class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm placeholder-neutral-600 focus:outline-none focus:border-green-500 transition-colors">
         </div>
         <div>
-          <label class="block text-xs font-semibold text-neutral-400 mb-1.5">Password</label>
-          <input type="password" id="swPass" placeholder="••••••" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm placeholder-neutral-600 focus:outline-none focus:border-green-500 transition-colors">
+          <label class="block text-xs font-semibold text-neutral-400 mb-1.5">Nomor Absen</label>
+          <input type="number" name="nomor_absen" placeholder="Masukkan nomor absen" required class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm placeholder-neutral-600 focus:outline-none focus:border-green-500 transition-colors">
         </div>
         <button type="submit" class="w-full bg-green-600 text-white font-semibold py-3 rounded-xl text-sm btn-glow">Cek Pembayaran</button>
       </form>
-      <p class="text-center text-[11px] text-neutral-600 mt-4">Demo: 2024001 / siswa123</p>
+      <p class="text-center text-[11px] text-neutral-600 mt-4">Masuk dengan nama dan nomor absen kamu</p>
     </div>
   </div>
 
@@ -760,15 +764,13 @@
     function doLogin(e, role) {
       e.preventDefault();
       if (role === 'admin') {
-        if (document.getElementById('admUser').value === 'admin' && document.getElementById('admPass').value === 'admin123') {
-          closeModal('adminModal'); toast('Login berhasil! Selamat datang Admin.','green');
-          setTimeout(() => openModal('dashModal'), 400);
-        } else toast('Username atau password salah!','red');
+        if (<?= $isAdminLogin ? 'true' : 'false' ?>) {
+          window.location.href = "views/admin/dashboard.php";
+        } else {
+          document.getElementById('admForm').submit();
+        }
       } else {
-        if (document.getElementById('swNis').value === '2024001' && document.getElementById('swPass').value === 'siswa123') {
-          closeModal('siswaModal'); toast('Login berhasil! Selamat datang Ahmad.','green');
-          setTimeout(() => openModal('swResultModal'), 400);
-        } else toast('NIS atau password salah!','red');
+        document.getElementById('swForm').submit();
       }
     }
 
