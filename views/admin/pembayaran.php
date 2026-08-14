@@ -247,16 +247,8 @@ if ($selected_periode_db !== '') {
         "SELECT COALESCE(SUM(jumlah), 0) AS total FROM pembayaran WHERE status = 'lunas' AND periode = ?",
         [$selected_periode_db]
     )->fetch_assoc();
-<<<<<<< HEAD
     $period_collected = (float)($aggP['total'] ?? 0);
     $period_target = $target_map[$selected_periode_db]['target'] ?? null;
-=======
-    $period_collected = (float)($aggP['t'] ?? 0);
-    if (isset($target_map[$selected_periode_db])) {
-        $period_per_siswa = (float)$target_map[$selected_periode_db]['per_siswa'];
-        $period_target = Koneksi::totalTargetPeriod($period_per_siswa);
-    }
->>>>>>> b9499bc3b2512b8fd45f410135ff31b26062c5ef
 }
 
 /* Hero ringkasan target: disesuaikan dengan periode terpilih / total / kosong. */
