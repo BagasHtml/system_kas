@@ -1,11 +1,13 @@
 <?php
 
-/**
- * Tanggung jawab: eksekusi query SQL, termasuk dukungan prepared statement.
- */
-
 trait QueryTrait
 {
+    /**
+     * Disediakan oleh ConnectionTrait (dipenuhi saat trait dikomposisi
+     * ke dalam class Koneksi).
+     */
+    abstract protected static function connection();
+
     /**
      * Jalankan query tanpa parameter.
      *

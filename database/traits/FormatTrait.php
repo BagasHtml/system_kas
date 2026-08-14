@@ -1,14 +1,7 @@
 <?php
 
-/**
- * Tanggung jawab: format periode & label bulan.
- *
- * Periode disimpan sebagai string 'YYYY-MM'.
- */
-
 trait FormatTrait
 {
-    /** Daftar label bulan penuh, key = '01'..'12'. */
     private static function bulanLabel(): array
     {
         return [
@@ -18,7 +11,6 @@ trait FormatTrait
         ];
     }
 
-    /** Daftar label bulan pendek, key = '01'..'12'. */
     private static function bulanPendekLabel(): array
     {
         return [
@@ -28,9 +20,6 @@ trait FormatTrait
         ];
     }
 
-    /**
-     * '2026-05' -> 'Mei 2026'; dikembalikan apa adanya jika format tidak dikenali.
-     */
     public static function periodeLabel(string $ym): string
     {
         if (preg_match('/^(\d{4})-(\d{2})$/', $ym, $m)) {
@@ -42,9 +31,6 @@ trait FormatTrait
         return $ym;
     }
 
-    /**
-     * '2026-05' -> 'Mei 2026' (bulan pendek, tahun penuh) untuk header matriks.
-     */
     public static function periodeShortLabel(string $ym): string
     {
         if (preg_match('/^(\d{4})-(\d{2})$/', $ym, $m)) {

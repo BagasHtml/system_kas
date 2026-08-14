@@ -1,12 +1,5 @@
 <?php
 
-/**
- * Tanggung jawab: koneksi database (singleton) dan konfigurasi.
- *
- * Konfigurasi bisa di-override lewat environment variable:
- *   KAS_DB_HOST, KAS_DB_USER, KAS_DB_PASS, KAS_DB_NAME
- */
-
 trait ConnectionTrait
 {
     /** @var mysqli|null Instance koneksi yang dipakai ulang selama request. */
@@ -17,11 +10,7 @@ trait ConnectionTrait
     private static $password = 'bagas_tresna123';
     private static $dbname = 'db_kas_kelas';
 
-    /**
-     * Ambil koneksi mysqli. Membuat koneksi baru hanya jika belum ada
-     * atau koneksi sebelumnya sudah terputus.
-     */
-    private static function connection()
+    protected static function connection()
     {
         if (self::$db instanceof mysqli && !self::$db->connect_errno) {
             return self::$db;
