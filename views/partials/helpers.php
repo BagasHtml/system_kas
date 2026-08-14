@@ -11,6 +11,9 @@ if (!function_exists('ic')) {
 if (!function_exists('rupiah')) {
     function rupiah(float $n): string
     {
+        if (class_exists('Koneksi')) {
+            return Koneksi::rupiah($n);
+        }
         return 'Rp ' . number_format($n, 0, ',', '.');
     }
 }

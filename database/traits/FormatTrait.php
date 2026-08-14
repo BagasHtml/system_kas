@@ -41,4 +41,9 @@ trait FormatTrait
         }
         return $ym;
     }
+
+    public static function rupiah(float $n): string
+    {
+        return 'Rp ' . number_format($n, 0, ',', '.');
+    }
 }
