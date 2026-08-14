@@ -54,18 +54,20 @@ $belum_bayar = $ada_target
     : (float)$sum['belum_bayar'];
 ?>
 
-<div class="main-content">
-    <div class="page-header">
+<div class="main-content dash-page">
+    <div class="dash-topbar">
         <div>
-            <h4>Laporan Kas Kelas</h4>
-            <div class="sub">Rekap pembayaran dan saldo kas kelas</div>
+            <h1 class="dash-title">Laporan Kas Kelas</h1>
+            <p class="dash-subtitle">Rekap pembayaran dan saldo kas kelas</p>
         </div>
-        <button class="btn-primary-custom" onclick="window.print()">
-            <i class="bi bi-printer"></i> Cetak
-        </button>
+        <div class="dash-topbar-actions">
+            <button class="dash-btn dash-btn-primary" onclick="window.print()">
+                <?= ic('<path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/>', 15) ?> Cetak
+            </button>
+        </div>
     </div>
 
-    <div class="dash-kpis" style="margin-bottom:20px;">
+    <div class="dash-kpis">
         <?php
         $kpis = [
             ['label' => 'Pemasukan (Terkumpul)', 'value' => rupiah((float)$sum['pemasukan']), 'tone' => 'success'],
@@ -80,17 +82,18 @@ $belum_bayar = $ada_target
         ?>
     </div>
 
-    <div class="lap-actions" style="margin-bottom:12px;">
-        <button class="btn-outline-custom" onclick="window.print()"><i class="bi bi-printer"></i> Cetak</button>
-    </div>
-
-    <div class="table-container">
-        <div class="table-header">
-            <h6>Matriks Pembayaran per Siswa</h6>
-            <span style="font-size:11px;color:var(--text-secondary);"><?= count($siswa) ?> siswa &times; <?= count($periode_list) ?> periode</span>
+    <div class="dash-card">
+        <div class="dash-card-head">
+            <div>
+                <div class="dash-card-title">Matriks Pembayaran per Siswa</div>
+                <div class="dash-card-sub"><?= count($siswa) ?> siswa &times; <?= count($periode_list) ?> bulan</div>
+            </div>
+            <button class="dash-btn dash-btn-light" onclick="window.print()">
+                <?= ic('<path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/>', 15) ?> Cetak
+            </button>
         </div>
-        <div class="table-responsive">
-            <table class="table lap-matrix">
+        <div class="dash-table-wrap">
+            <table class="dash-table lap-matrix">
                 <thead>
                     <tr>
                         <th style="width:44px;">No</th>
@@ -103,9 +106,11 @@ $belum_bayar = $ada_target
                 <tbody>
                     <?php if (empty($siswa) || empty($periode_list)): ?>
                         <tr>
-                            <td colspan="<?= 2 + count($periode_list) ?>" style="text-align:center;padding:40px 0;color:var(--text-muted);">
-                                <i class="bi bi-inbox" style="font-size:24px;display:block;margin-bottom:4px;"></i>
-                                Belum ada data untuk dibuatkan laporan
+                            <td colspan="<?= 2 + count($periode_list) ?>">
+                                <div class="dash-empty">
+                                    <div class="t">Belum ada data</div>
+                                    <div class="s">Belum ada data untuk dibuatkan laporan</div>
+                                </div>
                             </td>
                         </tr>
                     <?php else: ?>
@@ -113,7 +118,14 @@ $belum_bayar = $ada_target
                         <?php foreach ($siswa as $s): ?>
                             <tr>
                                 <td style="color:var(--text-muted);"><?= $no++ ?></td>
-                                <td><span style="font-weight:600;"><?= htmlspecialchars($s['nama']) ?></span></td>
+                                <td>
+                                    <div class="dash-cell-name">
+                                        <div class="dash-cell-avatar" style="background:var(--accent-soft);color:var(--accent);">
+                                            <?= strtoupper(substr($s['nama'], 0, 1)) ?>
+                                        </div>
+                                        <span class="nm"><?= htmlspecialchars($s['nama']) ?></span>
+                                    </div>
+                                </td>
                                 <?php foreach ($periode_list as $per): ?>
                                     <td style="text-align:center;">
                                         <?php $st = $map[$s['id']][$per] ?? 'belum'; ?>

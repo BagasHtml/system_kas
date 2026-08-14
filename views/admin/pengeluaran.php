@@ -9,6 +9,7 @@ $title = 'Pengeluaran - Admin';
 $active = 'pengeluaran';
 include '../partials/header.php';
 include '../partials/admin_sidebar.php';
+include '../partials/helpers.php';
 include_once '../../database/db.php';
 
 $db = new Koneksi();
@@ -93,22 +94,29 @@ $end_item = min($offset + count($pengeluaran), $total_data);
 $pg_query = http_build_query(['cari' => $cari]);
 ?>
 
-<div class="main-content">
-    <div class="page-header">
+<div class="main-content dash-page">
+    <div class="dash-topbar">
         <div>
-            <h4>Pengeluaran Kas</h4>
-            <div class="sub">Catat pengeluaran uang kas kelas</div>
+            <h1 class="dash-title">Pengeluaran Kas</h1>
+            <p class="dash-subtitle">Catat pengeluaran uang kas kelas</p>
         </div>
-        <button class="btn-primary-custom" data-bs-toggle="modal" data-bs-target="#modalPengeluaran">
-            <i class="bi bi-plus-lg"></i> Tambah Pengeluaran
-        </button>
+        <div class="dash-topbar-actions">
+            <button class="dash-btn dash-btn-primary" data-bs-toggle="modal" data-bs-target="#modalPengeluaran">
+                <?= ic('<path d="M12 5v14M5 12h14"/>', 15) ?> Tambah Pengeluaran
+            </button>
+        </div>
     </div>
 
     <?php Koneksi::renderFlash(); ?>
 
-    <div class="table-container">
-        <div class="table-header">
-            <h6>Daftar Pengeluaran</h6>
+    <div class="dash-card">
+        <div class="dash-card-head">
+            <div>
+                <div class="dash-card-title">Daftar Pengeluaran</div>
+                <div class="dash-card-sub">
+                    <?= $total_data > 0 ? "Menampilkan $start_item&ndash;$end_item dari $total_data transaksi &middot; total " . rupiah($total) : 'Belum ada transaksi' ?>
+                </div>
+            </div>
             <form class="table-search" method="get">
                 <input type="search" name="cari" value="<?= htmlspecialchars($cari) ?>" placeholder="Cari keterangan atau tanggal">
                 <button type="submit">Cari</button>
@@ -117,22 +125,25 @@ $pg_query = http_build_query(['cari' => $cari]);
                 <?php endif; ?>
             </form>
         </div>
-        <div class="table-responsive">
-            <table class="table">
+        <div class="dash-table-wrap">
+            <table class="dash-table">
                 <thead>
                     <tr>
                         <th style="width:60px;">No</th>
                         <th style="width:140px;">Tanggal</th>
                         <th>Keterangan</th>
-                        <th style="width:180px;">Jumlah</th>
+                        <th style="text-align:right;">Jumlah</th>
                         <th style="text-align:center;width:130px;">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($pengeluaran)): ?>
                         <tr>
-                            <td colspan="5" style="text-align:center;padding:36px 0;color:var(--text-muted);">
-                                <?= $cari !== '' ? 'Tidak ada pengeluaran yang cocok dengan "' . htmlspecialchars($cari) . '"' : 'Belum ada data pengeluaran' ?>
+                            <td colspan="5">
+                                <div class="dash-empty">
+                                    <div class="t"><?= $cari !== '' ? 'Tidak ada hasil untuk "' . htmlspecialchars($cari) . '"' : 'Belum ada data pengeluaran' ?></div>
+                                    <div class="s"><?= $cari === '' ? 'Catat pengeluaran melalui tombol Tambah Pengeluaran' : 'Coba kata kunci lain' ?></div>
+                                </div>
                             </td>
                         </tr>
                     <?php else: ?>
@@ -142,10 +153,10 @@ $pg_query = http_build_query(['cari' => $cari]);
                                 <td style="color:var(--text-muted);"><?= $no++ ?></td>
                                 <td style="color:var(--text-secondary);"><?= date('d/m/Y', strtotime($p['tanggal'])) ?></td>
                                 <td style="font-weight:600;"><?= htmlspecialchars($p['keterangan']) ?></td>
-                                <td style="color:var(--danger);font-weight:700;">- Rp <?= number_format($p['jumlah'], 0, ',', '.') ?></td>
+                                <td style="text-align:right;"><span class="dash-amount" style="color:var(--danger);">- <?= rupiah((float)$p['jumlah']) ?></span></td>
                                 <td style="text-align:center;">
-                                    <div style="display:flex;gap:4px;justify-content:center;">
-                                        <button class="btn-outline-custom" style="padding:4px 10px;"
+                                    <div style="display:flex;gap:6px;justify-content:center;">
+                                        <button class="dash-btn dash-btn-light" style="padding:6px 12px;"
                                                 data-bs-toggle="modal" data-bs-target="#modalPengeluaran"
                                                 data-id="<?= $p['id'] ?>"
                                                 data-keterangan="<?= htmlspecialchars($p['keterangan']) ?>"
@@ -157,7 +168,7 @@ $pg_query = http_build_query(['cari' => $cari]);
                                               onsubmit="return confirmDelete(event, 'Yakin hapus pengeluaran ini?')">
                                             <?= Koneksi::csrfField() ?>
                                             <input type="hidden" name="hapus" value="<?= $p['id'] ?>">
-                                            <button type="submit" class="btn-outline-custom" style="padding:4px 10px;color:var(--danger);">
+                                            <button type="submit" class="dash-btn dash-btn-light" style="padding:6px 12px;color:var(--danger);">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </form>
@@ -170,9 +181,9 @@ $pg_query = http_build_query(['cari' => $cari]);
             </table>
         </div>
         <?php if ($total_data > 0): ?>
-            <div class="table-pagination">
-                <span class="table-count">
-                    Menampilkan <?= $start_item ?>–<?= $end_item ?> dari <?= $total_data ?> transaksi &middot; total Rp <?= number_format($total, 0, ',', '.') ?>
+            <div class="dash-pagination">
+                <span class="dash-pg-info">
+                    Menampilkan <?= $start_item ?>–<?= $end_item ?> dari <?= $total_data ?> transaksi &middot; total <?= rupiah($total) ?>
                 </span>
                 <?php include '../partials/pagination.php'; ?>
             </div>
@@ -207,8 +218,8 @@ $pg_query = http_build_query(['cari' => $cari]);
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn-outline-custom" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn-primary-custom">Simpan</button>
+                    <button type="button" class="dash-btn dash-btn-light" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="dash-btn dash-btn-primary">Simpan</button>
                 </div>
             </form>
         </div>

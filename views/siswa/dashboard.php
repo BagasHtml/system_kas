@@ -47,163 +47,167 @@ if ($ada_target) {
 }
 $pct_kelas = $ada_target ? min(100, round($kelas_collected / $total_target * 100)) : 0;
 
-if ($ada_target) {
-    $kpi_belum = [
-        'label' => 'Belum Terkumpul',
-        'value' => rupiah($kelas_remainder),
-        'note' => $kelas_remainder <= 0 ? 'target kelas tercapai' : 'tersisa ' . rupiah($total_target) . ' menuju target kelas',
-        'tone' => $kelas_remainder <= 0 ? 'success' : 'danger',
-    ];
-} else {
-    $kpi_belum = [
-        'label' => 'Belum Terkumpul',
-        'value' => rupiah($belum),
-        'note' => $belum > 0 ? 'pembayaranmu yang belum tercatat' : 'semua sudah terkumpul',
-        'tone' => $belum > 0 ? 'danger' : 'success',
-    ];
-}
-
-$kpis = [
-    ['label' => 'Total Dibayar', 'value' => rupiah($lunas), 'note' => $periode_lunas . ' periode', 'tone' => 'success'],
-    $kpi_belum,
-    ['label' => 'Periode Terkumpul', 'value' => (string)$periode_lunas, 'tone' => 'info'],
+$banner = [
+    ['icon' => 'bi bi-wallet2', 'label' => 'Total Sudah Dibayar', 'value' => rupiah($lunas), 'note' => $periode_lunas . ' bulan sudah kamu bayar'],
+    ['icon' => 'bi bi-hourglass-split', 'label' => 'Belum Dibayar', 'value' => rupiah($belum), 'note' => $belum > 0 ? 'masih ada target uang kas yang belum terpenuhi' : 'tidak ada target uang kas hari ini'],
+    ['icon' => 'bi bi-calendar-check', 'label' => 'Bulan Lunas', 'value' => (string)$periode_lunas, 'note' => 'dari ' . count($pembayaran) . ' bulan tercatat'],
 ];
+
+/* Widget 2: Ringkasan Pengeluaran Kelas */
+$exp_total = $db::q("SELECT COALESCE(SUM(jumlah), 0) t, COUNT(*) c FROM pengeluaran")->fetch_assoc();
+$pengeluaran_total = (float)($exp_total['t'] ?? 0);
+$pengeluaran_count = (int)($exp_total['c'] ?? 0);
+$pengeluaran_terakhir = $db::q(
+    "SELECT keterangan, jumlah, tanggal FROM pengeluaran ORDER BY tanggal DESC, id DESC LIMIT 3"
+)->fetch_all(MYSQLI_ASSOC);
 ?>
 
 <div class="main-content student-page">
+    <?php $active = 'dashboard'; include '../partials/siswa_sidebar.php'; ?>
     <div class="dash-topbar">
         <div>
             <p class="student-eyebrow">Dashboard Siswa</p>
             <h1 class="dash-title">Hai, <?= $siswa_nama ?></h1>
-            <p class="dash-subtitle">Nomor absen <?= $siswa_absen ?> &middot; pantau status kas kamu</p>
+            <p class="dash-subtitle">Nomor absen <?= $siswa_absen ?> &middot; yuk pantau status kas kamu di sini</p>
         </div>
         <div class="dash-topbar-actions">
-            <a href="pengeluaran.php" class="dash-btn dash-btn-light">
-                Pengeluaran Uang Kas kelas
-            </a>
-            <a href="../../function/logout.php" class="dash-btn dash-btn-danger">
-                Keluar
-            </a>
         </div>
     </div>
 
-    <div class="dash-kpis">
-        <?php foreach ($kpis as $k): ?>
-            <?= kpi($k) ?>
+    <div class="dash-banner cols-3">
+        <?php foreach ($banner as $b): ?>
+            <div class="dash-banner-col">
+                <div class="dash-banner-icon"><i class="bi <?= $b['icon'] ?>"></i></div>
+                <div>
+                    <span class="dash-banner-label"><?= $b['label'] ?></span>
+                    <span class="dash-banner-value"><?= $b['value'] ?></span>
+                    <span class="dash-banner-note"><?= $b['note'] ?></span>
+                </div>
+            </div>
         <?php endforeach; ?>
     </div>
 
-    <div class="dash-card dash-pay-card" id="bayar">
-        <div class="dash-card-head">
-            <div>
-                <div class="dash-card-title">Bayar Kas Online</div>
-                <div class="dash-card-sub">Transfer Send Dana atau scan QRIS untuk membayar kas kelas</div>
-            </div>
-        </div>
-
-        <div class="dash-pay">
-            <div class="dash-pay-method">
-                <div class="dash-pay-brand dana">
-                    <?= ic('<path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4Z"/>', 20) ?>
-                    Send Dana
-                </div>
-                <div class="dash-pay-info">
-                    <div class="dash-pay-row">
-                        <span class="lbl">Nomor Dana</span>
-                        <span class="val num">0813-2175-0459</span>
-                    </div>
-                    <div class="dash-pay-row">
-                        <span class="lbl">Atas Nama</span>
-                        <span class="val">Bagas Tresna Nanda MS</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="dash-pay-method">
-                <div class="dash-pay-brand qris">
-                    <?= ic('<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h4v4h-4zM19 19h2v2h-2z"/>', 20) ?>
-                    QRIS
-                </div>
-                <div class="dash-pay-qris">
-                    <img src="<?= BASE_URL ?>/assets/img/qris.png" alt="QRIS Kas Kelas">
-                </div>
-                <div class="dash-pay-hint">Scan kode di atas setelah transfer</div>
-            </div>
-        </div>
-    </div>
-
-    <div class="dash-card">
-        <div class="dash-card-head">
-            <div>
-                <div class="dash-card-title">Target Kas Kelas</div>
-                <div class="dash-card-sub">Besaran kas yang disepakati kelas bersama</div>
-            </div>
-        </div>
-
-        <?php if (!$ada_target): ?>
-            <div class="dash-empty">
-                <div class="t">Target belum ditetapkan</div>
-                <div class="s">Bendahara belum menetapkan target kas untuk kelas</div>
-            </div>
-        <?php else: ?>
-            <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;">
-                <div style="display:flex;justify-content:space-between;align-items:center;">
-                    <span style="color:var(--text-secondary);">Kesepakatan kelas</span>
-                    <span style="font-weight:700;"><?= rupiah($total_target) ?></span>
-                </div>
-                <div style="display:flex;justify-content:space-between;align-items:center;">
-                    <span style="color:var(--text-secondary);">Terkumpul</span>
-                    <span style="font-weight:700;color:var(--success);"><?= rupiah($kelas_collected) ?></span>
-                </div>
-                <div style="display:flex;justify-content:space-between;align-items:center;">
-                    <span style="color:var(--text-secondary);">Belum terkumpul</span>
-                    <span style="font-weight:700;color:var(--danger);"><?= rupiah($kelas_remainder) ?></span>
-                </div>
-            </div>
-
-            <div class="dash-progress" style="margin-top:14px;">
-                <div class="top">
-                    <span class="lbl">Terkumpul dari target</span>
-                    <span class="val"><?= $pct_kelas ?>%</span>
-                </div>
-                <div class="track">
-                    <div class="fill" style="width:<?= $pct_kelas ?>%;"></div>
-                </div>
-            </div>
-
-            <?php if ($kelas_remainder <= 0): ?>
-                <div class="dash-notice" style="margin-top:14px;">
-                    <div><b>Target kas kelas tercapai.</b> Terima kasih atas partisipasi teman-teman!</div>
-                </div>
-            <?php else: ?>
-                <div class="dash-notice" style="margin-top:14px;">
-                    <div>Sudah terkumpul <b><?= rupiah($kelas_collected) ?></b> dari target kelas. Bagi yang belum, bisa melengkapi kapan saja ya. Terima kasih sudah ikut berpartisipasi!</div>
-                </div>
-            <?php endif; ?>
-        <?php endif; ?>
-    </div>
-
     <div class="dash-charts">
+        <div class="dash-card" id="bayar">
+            <div class="dash-card-head">
+                <div>
+                    <div class="dash-card-title">Bayar Kas Online</div>
+                    <div class="dash-card-sub">Bayar iuran kas kelas lewat Send Dana atau scan QRIS</div>
+                </div>
+                <span class="dash-year-label"><?= htmlspecialchars(Koneksi::periodeLabel(date('Y-m'))) ?></span>
+            </div>
+
+            <div class="dash-pay">
+                <div class="dash-pay-method">
+                    <div class="dash-pay-brand dana">
+                        <?= ic('<path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4Z"/>', 20) ?>
+                        Send Dana
+                    </div>
+                    <div class="dash-pay-info">
+                        <div class="dash-pay-row">
+                            <span class="lbl">Nomor Dana</span>
+                            <span class="val num">0813-2175-0459</span>
+                        </div>
+                        <div class="dash-pay-row">
+                            <span class="lbl">Atas Nama</span>
+                            <span class="val">Bagas Tresna Nanda MS</span>
+                        </div>
+                        <div class="dash-pay-row">
+                            <span class="lbl">Pembayaran Bulan</span>
+                            <span class="val"><?= htmlspecialchars(Koneksi::periodeLabel(date('Y-m'))) ?></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dash-pay-method">
+                    <div class="dash-pay-brand qris">
+                        <?= ic('<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h4v4h-4zM19 19h2v2h-2z"/>', 20) ?>
+                        QRIS
+                    </div>
+                    <div class="dash-pay-qris">
+                        <img src="<?= BASE_URL ?>/assets/img/qris.png" alt="QRIS Kas Kelas">
+                    </div>
+                    <div class="dash-pay-hint">Scan kode di atas setelah transfer</div>
+                </div>
+            </div>
+        </div>
+
         <div class="dash-card">
             <div class="dash-card-head">
                 <div>
-                    <div class="dash-card-title">Riwayat Pembayaran</div>
-                    <div class="dash-card-sub">Cek status pembayaran kas setiap periode</div>
+                    <div class="dash-card-title">Target Kas Kelas</div>
+                    <div class="dash-card-sub">Jumlah kas yang disepakati kelas untuk dikumpulkan bersama</div>
                 </div>
             </div>
 
-            <?php if (empty($pembayaran)): ?>
+            <?php if (!$ada_target): ?>
                 <div class="dash-empty">
-                    <div class="t">Belum ada riwayat pembayaran</div>
-                    <div class="s">Segera lakukan pembayaran kas ke pengurus kelas</div>
+                    <div class="t">Target belum ditetapkan</div>
+                    <div class="s">Bendahara belum menetapkan target kas untuk kelas</div>
                 </div>
+            <?php else: ?>
+                <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <span style="color:var(--text-secondary);">Target kesepakatan</span>
+                        <span style="font-weight:700;"><?= rupiah($total_target) ?></span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <span style="color:var(--text-secondary);">Sudah terkumpul</span>
+                        <span style="font-weight:700;color:var(--success);"><?= rupiah($kelas_collected) ?></span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <span style="color:var(--text-secondary);">Masih kurang</span>
+                        <span style="font-weight:700;color:var(--danger);"><?= rupiah($kelas_remainder) ?></span>
+                    </div>
+                </div>
+
+                <div class="dash-progress" style="margin-top:14px;">
+                    <div class="top">
+                        <span class="lbl">Terkumpul dari target</span>
+                        <span class="val"><?= $pct_kelas ?>%</span>
+                    </div>
+                    <div class="track">
+                        <div class="fill" style="width:<?= $pct_kelas ?>%;"></div>
+                    </div>
+                </div>
+
+                <?php if ($kelas_remainder <= 0): ?>
+                    <div class="dash-notice" style="margin-top:14px;">
+                        <div><b>Target kas kelas tercapai.</b> Terima kasih sudah berpartisipasi, teman-teman!</div>
+                    </div>
+                <?php else: ?>
+                    <div class="dash-notice" style="margin-top:14px;">
+                        <div>Kas kelas sudah terkumpul <b><?= rupiah($kelas_collected) ?></b> dari target. Terima kasih atas partisipasinya!</div>
+                    </div>
+                <?php endif; ?>
+            <?php endif; ?>
+        </div>
+    </div>
+
+    <div class="dash-charts">
+        <div class="dash-card" id="riwayat">
+            <div class="dash-card-head">
+                <div>
+                    <div class="dash-card-title">Riwayat Pembayaran Saya</div>
+                    <div class="dash-card-sub">Status pembayaran kas kamu per bulan</div>
+                </div>
+                <a href="pengeluaran.php" class="dash-btn dash-btn-light">
+                    Lihat Pengeluaran
+                </a>
+            </div>
+
+            <?php if (empty($pembayaran)): ?>
+                    <div class="dash-empty">
+                        <div class="t">Belum ada riwayat pembayaran</div>
+                        <div class="s">Belum ada pembayaran tercatat. Yuk segera bayar kas kamu!</div>
+                    </div>
             <?php else: ?>
                 <div class="dash-table-wrap">
                     <table class="dash-table">
                         <thead>
                             <tr>
                                 <th style="width:50px;">No</th>
-                                <th>Periode</th>
+                                <th>Bulan</th>
                                 <th>Jumlah</th>
                                 <th>Tanggal Bayar</th>
                                 <th>Status</th>
@@ -229,40 +233,40 @@ $kpis = [
         <div class="dash-card">
             <div class="dash-card-head">
                 <div>
-                    <div class="dash-card-title">Progres Pembayaran</div>
-                    <div class="dash-card-sub">Ringkasan kas pribadi kamu</div>
+                    <div class="dash-card-title">Ringkasan Pengeluaran Kelas</div>
+                    <div class="dash-card-sub">Total pengeluaran &middot; <?= $pengeluaran_count ?> transaksi</div>
                 </div>
             </div>
 
-            <div class="dash-donut-wrap">
-                <div class="dash-donut" style="--p:<?= $pct_lunas ?>%;--c1:var(--accent);--c2:#d9a241;">
-                    <div class="dash-donut-center">
-                        <span class="pct"><?= $pct_lunas ?>%</span>
-                    </div>
-                </div>
-                <div class="dash-legend">
-                    <div class="dash-legend-item">
-                        <span class="sw" style="background:var(--accent);"></span>
-                        <span class="name">Terkumpul<span class="sub"><?= $periode_lunas ?> periode</span></span>
-                        <span class="val"><?= rupiah($lunas) ?></span>
-                    </div>
-                    <div class="dash-legend-item">
-                        <span class="sw" style="background:#d9a241;"></span>
-                        <span class="name">Belum Terkumpul<span class="sub"><?= count($pembayaran) - $periode_lunas ?> periode</span></span>
-                        <span class="val"><?= rupiah($belum) ?></span>
-                    </div>
-                </div>
+            <div style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-secondary);font-weight:700;margin-bottom:6px;">
+                Total Pengeluaran
+            </div>
+            <div style="font-size:28px;font-weight:800;letter-spacing:-.5px;margin-bottom:18px;color:var(--danger);">
+                <?= rupiah($pengeluaran_total) ?>
             </div>
 
-            <div class="dash-progress">
-                <div class="top">
-                    <span class="lbl">Progres pembayaran</span>
-                    <span class="val"><?= $pct_lunas ?>%</span>
+            <?php if (empty($pengeluaran_terakhir)): ?>
+                <div class="dash-empty">
+                    <div class="t">Belum ada pengeluaran</div>
+                    <div class="s">Pengurus kelas belum mencatat pengeluaran kas</div>
                 </div>
-                <div class="track">
-                    <div class="fill" style="width:<?= $pct_lunas ?>%;"></div>
+            <?php else: ?>
+                <div style="display:flex;flex-direction:column;">
+                    <?php foreach ($pengeluaran_terakhir as $e): ?>
+                        <div style="display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-top:1px solid var(--border);">
+                            <div style="min-width:0;">
+                                <div style="font-weight:600;font-size:13px;line-height:1.35;"><?= htmlspecialchars($e['keterangan']) ?></div>
+                                <div style="font-size:11px;color:var(--text-muted);margin-top:2px;"><?= date('d M Y', strtotime($e['tanggal'])) ?></div>
+                            </div>
+                            <div style="font-weight:700;font-size:13px;color:var(--danger);white-space:nowrap;">- <?= rupiah((float)$e['jumlah']) ?></div>
+                        </div>
+                    <?php endforeach; ?>
                 </div>
-            </div>
+            <?php endif; ?>
+
+            <a href="pengeluaran.php" class="dash-btn dash-btn-primary" style="margin-top:18px;width:100%;justify-content:center;">
+                Cek Rincian Pengeluaran Lengkap <?= ic('<path d="M9 6l6 6-6 6"/>', 14) ?>
+            </a>
         </div>
     </div>
 </div>

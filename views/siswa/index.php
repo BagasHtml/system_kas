@@ -14,7 +14,7 @@ include '../partials/header.php';
             <p>Lihat status pembayaran kas dan riwayat penggunaan uang kelas secara transparan.</p>
         </div>
         <ul class="auth-visual-list">
-            <li><i class="bi bi-check2-circle"></i> Cek status pembayaran per periode</li>
+            <li><i class="bi bi-check2-circle"></i> Cek status pembayaran per bulan</li>
             <li><i class="bi bi-check2-circle"></i> Lihat pengeluaran kas kelas</li>
             <li><i class="bi bi-check2-circle"></i> Bayar kas secara online</li>
         </ul>
