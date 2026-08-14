@@ -714,6 +714,20 @@ body {
 .text-status.lunas { color: var(--success); }
 .text-status.belum { color: var(--danger); }
 
+.dash-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 5px 12px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+.dash-status-pill.success { color: var(--success); background: var(--success-bg); }
+.dash-status-pill.warn { color: var(--warning); background: var(--warn-bg); }
+.dash-status-pill.muted { color: var(--text-muted); background: var(--border); }
+
 /* ===== BUTTONS ===== */
 .btn-primary-custom {
     display: inline-flex;

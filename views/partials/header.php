@@ -1,13 +1,12 @@
 <?php
 if (!defined('BASE_URL')) {
-    $rootDir = str_replace('\\', '/', dirname(__DIR__, 2));
-    $docRoot = str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT'] ?? '');
-    if ($docRoot && strpos($rootDir, $docRoot) === 0) {
-        $baseUrl = substr($rootDir, strlen($docRoot));
+    $rootPath = realpath(dirname(__DIR__, 2));
+    $docRoot  = realpath($_SERVER['DOCUMENT_ROOT'] ?? '');
+    if ($docRoot && strpos($rootPath, $docRoot) === 0) {
+        define('BASE_URL', rtrim(str_replace('\\', '/', substr($rootPath, strlen($docRoot))), '/'));
     } else {
-        $baseUrl = '/system_kas';
+        define('BASE_URL', '');
     }
-    define('BASE_URL', rtrim($baseUrl, '/'));
 }
 ?>
 <!DOCTYPE html>
