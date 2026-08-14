@@ -10,9 +10,9 @@ include '../partials/helpers.php';
 $tunggakan_bulan = get_tunggakan_siswa($siswa_id);
 
 $banner = [
-    ['icon' => 'bi bi-wallet2', 'label' => 'Total Sudah Dibayar', 'value' => rupiah($lunas), 'note' => $periode_lunas . ' bulan sudah kamu bayar'],
-    ['icon' => 'bi bi-hourglass-split', 'label' => 'Belum Dibayar', 'value' => rupiah($belum), 'note' => $belum > 0 ? 'masih ada target uang kas yang belum terpenuhi' : 'tidak ada target uang kas hari ini'],
-    ['icon' => 'bi bi-calendar-check', 'label' => 'Bulan Lunas', 'value' => (string)$periode_lunas, 'note' => 'dari ' . count($pembayaran) . ' bulan tercatat'],
+    ['icon' => 'bi bi-wallet2', 'label' => 'Total Kontribusi Kamu', 'value' => rupiah($lunas), 'note' => $periode_lunas . ' bulan kontribusi terkumpul'],
+    ['icon' => 'bi bi-hourglass-split', 'label' => 'Sisa Kontribusi', 'value' => rupiah($belum), 'note' => $belum > 0 ? 'masih ada target uang kas yang belum terpenuhi' : 'tidak ada target uang kas hari ini'],
+    ['icon' => 'bi bi-calendar-check', 'label' => 'Bulan Lengkap', 'value' => (string)$periode_lunas, 'note' => 'dari ' . count($pembayaran) . ' bulan tercatat'],
 ];
 ?>
 
@@ -25,11 +25,11 @@ $banner = [
                 Hai, <?= $siswa_nama ?>
                 <?php if ($tunggakan_bulan > 0): ?>
                     <span class="badge bg-danger" style="font-size:12px;font-weight:600;padding:5px 10px;border-radius:20px;">
-                        <i class="bi bi-exclamation-triangle-fill"></i> Menunggak <?= $tunggakan_bulan ?> Bulan
+                        <i class="bi bi-hourglass-split"></i> <?= $tunggakan_bulan ?> Bulan Belum Lengkap
                     </span>
                 <?php else: ?>
                     <span class="badge bg-success" style="font-size:12px;font-weight:600;padding:5px 10px;border-radius:20px;">
-                        <i class="bi bi-check-circle-fill"></i> Iuran Lunas
+                        <i class="bi bi-check-circle-fill"></i> Kas Lengkap
                     </span>
                 <?php endif; ?>
             </h1>
@@ -44,7 +44,7 @@ $banner = [
     <div class="dash-banner cols-3">
         <?php foreach ($banner as $b): ?>
             <div class="dash-banner-col">
-                <div class="dash-banner-icon"><i class="bi <?= $b['icon'] ?>"></i></div>
+                <div class="dash-banner-icon"><i class="<?= $b['icon'] ?>"></i></div>
                 <div>
                     <span class="dash-banner-label"><?= $b['label'] ?></span>
                     <span class="dash-banner-value"><?= $b['value'] ?></span>
@@ -54,12 +54,57 @@ $banner = [
         <?php endforeach; ?>
     </div>
 
+    <div class="dash-card">
+        <div class="dash-card-head">
+            <div>
+                <div class="dash-card-title">Pemasukan Kas per Bulan</div>
+                <div class="dash-card-sub">Total kontribusi kelas terkumpul tahun <?= date('Y') ?></div>
+            </div>
+            <div class="dash-trends">
+                <span class="dash-trend <?= $trend_up ? 'up' : 'down' ?>"><?= $trend_up ? '&uarr;' : '&darr;' ?> <?= $trend_txt ?>%</span>
+                <span class="dash-year-label">Tahun <?= date('Y') ?></span>
+            </div>
+        </div>
+
+        <?php if (!$chart_any): ?>
+            <div class="dash-chart-svg">
+                <div class="dash-empty-note">Belum ada pembayaran tercatat</div>
+            </div>
+        <?php else: ?>
+            <div class="dash-chart-svg">
+                <svg viewBox="0 0 <?= $CW ?> <?= $CH ?>" role="img" aria-label="Grafik pemasukan per bulan">
+                    <defs>
+                        <linearGradient id="dashAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#00A37A" stop-opacity="0.22"/>
+                            <stop offset="100%" stop-color="#00A37A" stop-opacity="0.02"/>
+                        </linearGradient>
+                    </defs>
+                    <?php for ($i = 0; $i <= 4; $i++): ?>
+                        <?php $gy = $CPT + ($CH - $CPT - $CPB) * ($i / 4); ?>
+                        <line class="dash-grid-line" x1="<?= $CPL ?>" y1="<?= round($gy, 1) ?>" x2="<?= $CW - $CPR ?>" y2="<?= round($gy, 1) ?>"/>
+                        <text class="dash-y-label" x="<?= $CPL - 8 ?>" y="<?= round($gy, 1) + 3 ?>" text-anchor="end"><?= shortnum($max_chart * (1 - $i / 4)) ?></text>
+                    <?php endfor; ?>
+                    <path class="dash-line-area" d="<?= $area_path ?>"/>
+                    <path class="dash-line" d="<?= $smooth_path ?>"/>
+                    <?php foreach ($pts as $idx => $pt): ?>
+                        <circle class="dash-dot" cx="<?= $pt[0] ?>" cy="<?= $pt[1] ?>" r="3.5">
+                            <title><?= $bulan[$idx] ?>: Rp <?= number_format($chart[$idx + 1], 0, ',', '.') ?></title>
+                        </circle>
+                    <?php endforeach; ?>
+                    <?php foreach ($pts as $idx => $pt): ?>
+                        <text class="dash-x-label" x="<?= $pt[0] ?>" y="<?= $CH - 10 ?>" text-anchor="middle"><?= $bulan[$idx] ?></text>
+                    <?php endforeach; ?>
+                </svg>
+            </div>
+        <?php endif; ?>
+    </div>
+
     <div class="dash-charts">
         <div class="dash-card" id="bayar">
             <div class="dash-card-head">
                 <div>
-                    <div class="dash-card-title">Bayar Kas Online</div>
-                    <div class="dash-card-sub">Bayar iuran kas kelas lewat Send Dana atau scan QRIS</div>
+                    <div class="dash-card-title">Kirim Kontribusi Kas</div>
+                    <div class="dash-card-sub">Kirim kontribusi kas kelas lewat Send Dana atau scan QRIS</div>
                 </div>
                 <span class="dash-year-label"><?= htmlspecialchars(Koneksi::periodeLabel(date('Y-m'))) ?></span>
             </div>
@@ -80,7 +125,7 @@ $banner = [
                             <span class="val">Bagas Tresna Nanda MS</span>
                         </div>
                         <div class="dash-pay-row">
-                            <span class="lbl">Pembayaran Bulan</span>
+                            <span class="lbl">Bulan Kontribusi</span>
                             <span class="val"><?= htmlspecialchars(Koneksi::periodeLabel(date('Y-m'))) ?></span>
                         </div>
                     </div>
@@ -100,7 +145,7 @@ $banner = [
 
             <div class="dash-pay-confirm" style="margin-top:20px;padding-top:20px;border-top:1px dashed var(--border);">
                 <div style="font-weight:700;font-size:15px;margin-bottom:6px;display:flex;align-items:center;gap:6px;">
-                    <i class="bi bi-upload" style="color:var(--accent);"></i> Konfirmasi &amp; Upload Bukti Pembayaran
+                    <i class="bi bi-upload" style="color:var(--accent);"></i> Konfirmasi &amp; Upload Bukti
                 </div>
                 <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;">
                     Sudah transfer via DANA atau QRIS? Upload foto bukti transfer di bawah agar bendahara dapat memverifikasi.
@@ -109,7 +154,7 @@ $banner = [
                     <?= Koneksi::csrfField() ?>
                     <input type="hidden" name="upload_bukti" value="1">
                     <div>
-                        <label class="form-label" style="font-size:12px;font-weight:600;">Bulan iuran yang dibayar</label>
+                        <label class="form-label" style="font-size:12px;font-weight:600;">Bulan kontribusi</label>
                         <select name="periode" class="form-select form-select-sm" required style="border-radius:8px;">
                             <?php if (empty($target_map)): ?>
                                 <option value="<?= date('Y-m') ?>"><?= Koneksi::periodeLabel(date('Y-m')) ?></option>
@@ -136,14 +181,14 @@ $banner = [
                     </div>
                     <div style="grid-column: 1 / -1;margin-top:4px;">
                         <button type="submit" class="dash-btn dash-btn-primary" style="width:100%;justify-content:center;">
-                            <i class="bi bi-send-check"></i> Kirim Konfirmasi Pembayaran
+                            <i class="bi bi-send-check"></i> Kirim Konfirmasi Kas
                         </button>
                     </div>
                 </form>
             </div>
         </div>
 
-        <div class="dash-card">
+        <div class="dash-card dash-target-card">
             <div class="dash-card-head">
                 <div>
                     <div class="dash-card-title">Target Kas Kelas</div>
@@ -164,22 +209,7 @@ $banner = [
                     <div class="s">Bendahara belum menetapkan target kas untuk kelas</div>
                 </div>
             <?php else: ?>
-                <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;">
-                        <span style="color:var(--text-secondary);">Target kesepakatan</span>
-                        <span style="font-weight:700;"><?= rupiah($total_target) ?></span>
-                    </div>
-                    <div style="display:flex;justify-content:space-between;align-items:center;">
-                        <span style="color:var(--text-secondary);">Sudah terkumpul</span>
-                        <span style="font-weight:700;color:var(--success);"><?= rupiah($kelas_collected) ?></span>
-                    </div>
-                    <div style="display:flex;justify-content:space-between;align-items:center;">
-                        <span style="color:var(--text-secondary);">Masih kurang</span>
-                        <span style="font-weight:700;color:var(--danger);"><?= rupiah($kelas_remainder) ?></span>
-                    </div>
-                </div>
-
-                <div class="dash-progress" style="margin-top:14px;">
+                <div class="dash-progress dash-progress-lg">
                     <div class="top">
                         <span class="lbl">Terkumpul dari target</span>
                         <span class="val"><?= $pct_kelas ?>%</span>
@@ -189,15 +219,24 @@ $banner = [
                     </div>
                 </div>
 
-                <?php if ($kelas_remainder <= 0): ?>
-                    <div class="dash-notice" style="margin-top:14px;">
-                        <div><b>Target kas kelas tercapai.</b> Terima kasih sudah berpartisipasi, teman-teman!</div>
+                <div class="dash-target-stats">
+                    <div class="tstat">
+                        <span class="lbl">Target Kelas</span>
+                        <span class="val"><?= rupiah($total_target) ?></span>
                     </div>
-                <?php else: ?>
-                    <div class="dash-notice" style="margin-top:14px;">
-                        <div>Kas kelas sudah terkumpul <b><?= rupiah($kelas_collected) ?></b> dari target. Terima kasih atas partisipasinya!</div>
+                    <div class="tstat">
+                        <span class="lbl">Terkumpul</span>
+                        <span class="val acc"><?= rupiah($kelas_collected) ?></span>
                     </div>
-                <?php endif; ?>
+                    <div class="tstat">
+                        <span class="lbl">Siswa Berpartisipasi</span>
+                        <span class="val"><?= $siswa_kontribusi ?><em> / <?= $jumlah_siswa ?></em></span>
+                    </div>
+                    <div class="tstat">
+                        <span class="lbl">Sisa Target</span>
+                        <span class="val <?= $kelas_remainder <= 0 ? 'up' : 'warn' ?>"><?= $kelas_remainder <= 0 ? 'Tercapai' : rupiah($kelas_remainder) ?></span>
+                    </div>
+                </div>
             <?php endif; ?>
         </div>
     </div>
@@ -206,8 +245,8 @@ $banner = [
         <div class="dash-card" id="riwayat">
             <div class="dash-card-head">
                 <div>
-                    <div class="dash-card-title">Riwayat Pembayaran Saya</div>
-                    <div class="dash-card-sub">Status pembayaran kas kamu per bulan</div>
+                    <div class="dash-card-title">Riwayat Kontribusi Saya</div>
+                    <div class="dash-card-sub">Status kontribusi kas kamu per bulan</div>
                 </div>
                 <a href="pengeluaran.php" class="dash-btn dash-btn-light">
                     Lihat Pengeluaran
@@ -216,8 +255,8 @@ $banner = [
 
             <?php if (empty($pembayaran)): ?>
                     <div class="dash-empty">
-                        <div class="t">Belum ada riwayat pembayaran</div>
-                        <div class="s">Belum ada pembayaran tercatat. Yuk segera bayar kas kamu!</div>
+                        <div class="t">Belum ada riwayat kontribusi</div>
+                        <div class="s">Belum ada kontribusi tercatat. Yuk kirim kontribusi kas kamu!</div>
                     </div>
             <?php else: ?>
                 <div class="dash-table-wrap">
@@ -227,7 +266,7 @@ $banner = [
                                 <th style="width:50px;">No</th>
                                 <th>Bulan</th>
                                 <th>Jumlah</th>
-                                <th>Tanggal Bayar</th>
+                                <th>Tanggal</th>
                                 <th>Status</th>
                                 <th style="text-align:center;">Bukti</th>
                             </tr>

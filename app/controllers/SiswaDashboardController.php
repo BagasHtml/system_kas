@@ -107,6 +107,52 @@ class SiswaDashboardController
         }
         $pct_kelas = $ada_target ? min(100, round($kelas_collected / $total_target * 100)) : 0;
 
+        $jumlah_siswa = (int)Koneksi::jumlahSiswa();
+        $siswa_kontribusi = (int)($db::q("SELECT COUNT(DISTINCT siswa_id) c FROM pembayaran WHERE status = 'lunas'")->fetch_assoc()['c'] ?? 0);
+
+        /* Chart pemasukan per bulan (transparansi kas kelas). */
+        $chart = array_fill(1, 12, 0.0);
+        foreach ($db::q(
+            "SELECT MONTH(tanggal_bayar) m, COALESCE(SUM(jumlah), 0) t
+             FROM pembayaran
+             WHERE status = 'lunas' AND tanggal_bayar IS NOT NULL AND YEAR(tanggal_bayar) = YEAR(CURDATE())
+             GROUP BY MONTH(tanggal_bayar)"
+        ) as $r) {
+            $chart[(int)$r['m']] = (float)$r['t'];
+        }
+        $max_chart = max(1, max($chart));
+        $chart_any = array_sum($chart) > 0;
+
+        $bulan = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+
+        $cur_m = (int)date('n');
+        $prev_m = $cur_m - 1;
+        $cur_val = $chart[$cur_m];
+        $prev_val = $prev_m >= 1 ? $chart[$prev_m] : 0;
+        $trend = $prev_val > 0 ? round(($cur_val - $prev_val) / $prev_val * 100) : 0;
+        $trend_up = $trend >= 0;
+        $trend_txt = $trend_up ? '+' . $trend : (string)$trend;
+
+        $CW = 640; $CH = 240; $CPL = 46; $CPR = 14; $CPT = 22; $CPB = 34;
+        $pts = [];
+        for ($i = 1; $i <= 12; $i++) {
+            $x = $CPL + ($i - 1) * (($CW - $CPL - $CPR) / 11);
+            $y = $chart[$i] > 0 ? $CPT + ($CH - $CPT - $CPB) * (1 - $chart[$i] / $max_chart) : ($CH - $CPB);
+            $pts[] = [round($x, 2), round($y, 2)];
+        }
+        $smooth_path = "M {$pts[0][0]},{$pts[0][1]}";
+        for ($i = 0; $i < 11; $i++) {
+            $p0 = $pts[max(0, $i - 1)];
+            $p1 = $pts[$i];
+            $p2 = $pts[$i + 1];
+            $p3 = $pts[min(11, $i + 2)];
+            $c1x = round($p1[0] + ($p2[0] - $p0[0]) / 6, 2); $c1y = round($p1[1] + ($p2[1] - $p0[1]) / 6, 2);
+            $c2x = round($p2[0] - ($p3[0] - $p1[0]) / 6, 2); $c2y = round($p2[1] - ($p3[1] - $p1[1]) / 6, 2);
+            $smooth_path .= " C {$c1x},{$c1y} {$c2x},{$c2y} {$p2[0]},{$p2[1]}";
+        }
+        $baseline = $CH - $CPB;
+        $area_path = $smooth_path . " L {$pts[11][0]},{$baseline} L {$pts[0][0]},{$baseline} Z";
+
         /* Widget 2: Ringkasan Pengeluaran Kelas */
         $exp_total = $db::q("SELECT COALESCE(SUM(jumlah), 0) t, COUNT(*) c FROM pengeluaran")->fetch_assoc();
         $pengeluaran_total = (float)($exp_total['t'] ?? 0);
@@ -129,9 +175,32 @@ class SiswaDashboardController
             'kelas_collected'       => $kelas_collected,
             'kelas_remainder'       => $kelas_remainder,
             'pct_kelas'             => $pct_kelas,
+            'jumlah_siswa'          => $jumlah_siswa,
+            'siswa_kontribusi'      => $siswa_kontribusi,
             'pengeluaran_total'     => $pengeluaran_total,
             'pengeluaran_count'     => $pengeluaran_count,
             'pengeluaran_terakhir'  => $pengeluaran_terakhir,
+            'chart'                 => $chart,
+            'max_chart'             => $max_chart,
+            'chart_any'             => $chart_any,
+            'bulan'                 => $bulan,
+            'cur_m'                 => $cur_m,
+            'prev_m'                => $prev_m,
+            'cur_val'               => $cur_val,
+            'prev_val'              => $prev_val,
+            'trend'                 => $trend,
+            'trend_up'              => $trend_up,
+            'trend_txt'             => $trend_txt,
+            'CW'                    => $CW,
+            'CH'                    => $CH,
+            'CPL'                   => $CPL,
+            'CPR'                   => $CPR,
+            'CPT'                   => $CPT,
+            'CPB'                   => $CPB,
+            'pts'                   => $pts,
+            'smooth_path'           => $smooth_path,
+            'area_path'             => $area_path,
+            'baseline'              => $baseline,
         ];
     }
 }

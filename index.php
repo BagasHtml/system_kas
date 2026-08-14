@@ -16,6 +16,16 @@ $isAdminLogin = isset($_SESSION['username']);
       theme: {
         extend: {
           fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] },
+          colors: {
+            green: {
+              400: '#00B98A',
+              500: '#00A37A',
+              600: '#008062',
+            },
+            emerald: {
+              500: '#00A37A',
+            },
+          },
         }
       }
     }
@@ -24,11 +34,11 @@ $isAdminLogin = isset($_SESSION['username']);
     body { font-family: 'Plus Jakarta Sans', sans-serif; }
     ::-webkit-scrollbar { width: 5px; }
     ::-webkit-scrollbar-track { background: #0a0a0a; }
-    ::-webkit-scrollbar-thumb { background: #22c55e; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb { background: #00A37A; border-radius: 10px; }
 
     .hero-glow {
-      background: radial-gradient(ellipse 600px 400px at 70% 40%, rgba(34,197,94,0.12) 0%, transparent 70%),
-                  radial-gradient(ellipse 300px 300px at 20% 80%, rgba(34,197,94,0.06) 0%, transparent 70%);
+      background: radial-gradient(ellipse 600px 400px at 70% 40%, rgba(0,163,122,0.12) 0%, transparent 70%),
+                  radial-gradient(ellipse 300px 300px at 20% 80%, rgba(0,163,122,0.06) 0%, transparent 70%);
     }
 
     .grid-bg {
@@ -72,21 +82,21 @@ $isAdminLogin = isset($_SESSION['username']);
     }
 
     .btn-glow {
-      box-shadow: 0 0 20px rgba(34,197,94,0.3);
+      box-shadow: 0 0 20px rgba(0,163,122,0.3);
       transition: all 0.3s;
     }
     .btn-glow:hover {
-      box-shadow: 0 0 35px rgba(34,197,94,0.5);
+      box-shadow: 0 0 35px rgba(0,163,122,0.5);
       transform: translateY(-2px);
     }
 
     .line-accent {
-      background: linear-gradient(90deg, #22c55e, transparent);
+      background: linear-gradient(90deg, #00A37A, transparent);
       height: 1px;
     }
 
     .stat-num {
-      background: linear-gradient(135deg, #22c55e, #4ade80);
+      background: linear-gradient(135deg, #00A37A, #00B98A);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
@@ -98,10 +108,10 @@ $isAdminLogin = isset($_SESSION['username']);
     }
 
     .expense-row { transition: all 0.2s; }
-    .expense-row:hover { background: rgba(34,197,94,0.04); }
+    .expense-row:hover { background: rgba(0,163,122,0.04); }
 
     tr.data-row td { transition: background 0.15s; }
-    tr.data-row:hover td { background: #f0fdf4; }
+    tr.data-row:hover td { background: #E6F5F1; }
   </style>
 </head>
 <body class="bg-[#0a0a0a] text-white">
@@ -325,7 +335,7 @@ $isAdminLogin = isset($_SESSION['username']);
 
   <!-- PENGELUARAN -->
   <section id="pengeluaran" class="py-24 px-6 relative">
-    <div class="absolute inset-0 bg-gradient-to-b from-transparent via-green-600/[0.02] to-transparent"></div>
+    <div class="absolute inset-0 bg-gradient-to-b from-transparent via-[#00A37A]/[0.02] to-transparent"></div>
     <div class="max-w-7xl mx-auto relative z-10">
       <div class="fade-up">
         <div class="flex items-center gap-3 mb-3">

@@ -11,12 +11,12 @@ include '../partials/header.php';
                 <i class="bi bi-person-badge-fill"></i>
             </div>
             <h1>Pantau Kas Kamu</h1>
-            <p>Lihat status pembayaran kas dan riwayat penggunaan uang kelas secara transparan.</p>
+            <p>Lihat status kontribusi kas dan riwayat penggunaan uang kelas secara transparan.</p>
         </div>
         <ul class="auth-visual-list">
-            <li><i class="bi bi-check2-circle"></i> Cek status pembayaran per bulan</li>
+            <li><i class="bi bi-check2-circle"></i> Cek status kontribusi per bulan</li>
             <li><i class="bi bi-check2-circle"></i> Lihat pengeluaran kas kelas</li>
-            <li><i class="bi bi-check2-circle"></i> Bayar kas secara online</li>
+            <li><i class="bi bi-check2-circle"></i> Kirim kontribusi kas secara online</li>
         </ul>
     </aside>
 

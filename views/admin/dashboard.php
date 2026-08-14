@@ -33,9 +33,11 @@ $kpis = [
         <div class="dash-topbar-actions">
             <div class="dash-datechip">
                 <?= ic('<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>', 14) ?>
-                <div class="dash-user">
-            <span class="dash-username"><?= $username ?></span>
-            <div class="dash-avatar"><?= strtoupper(substr($username, 0, 1)) ?></div>
+            </div>
+            <div class="dash-user">
+                <span class="dash-username"><?= $username ?></span>
+                <div class="dash-avatar"><?= strtoupper(substr($username, 0, 1)) ?></div>
+            </div>
         </div>
     </div>
 
@@ -57,7 +59,7 @@ $kpis = [
     <div class="dash-banner">
         <?php foreach ($banner as $b): ?>
             <div class="dash-banner-col">
-                <div class="dash-banner-icon"><i class="bi <?= $b['icon'] ?>"></i></div>
+                <div class="dash-banner-icon"><i class="<?= $b['icon'] ?>"></i></div>
                 <div>
                     <span class="dash-banner-label"><?= $b['label'] ?></span>
                     <span class="dash-banner-value"><?= $b['value'] ?></span>
@@ -120,6 +122,13 @@ $kpis = [
                         <div class="dash-card-title">Status Pembayaran</div>
                         <div class="dash-card-sub"><?= $ada_target && $kas_per_siswa !== null ? 'Target kelas = ' . rupiah($kas_per_siswa) . ' per siswa' : 'Perbandingan nominal kas' ?></div>
                     </div>
+                    <?php if (!$ada_target): ?>
+                        <span class="dash-status-pill muted"><i class="bi bi-dash-circle"></i> Belum Ditentukan</span>
+                    <?php elseif ($pemasukan >= $total_target): ?>
+                        <span class="dash-status-pill success"><i class="bi bi-check-circle-fill"></i> Target Tercapai</span>
+                    <?php else: ?>
+                        <span class="dash-status-pill warn"><i class="bi bi-hourglass-split"></i> <?= $pct_lunas ?>% Terkumpul</span>
+                    <?php endif; ?>
                 </div>
 
                 <div class="dash-donut-wrap">

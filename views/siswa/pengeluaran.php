@@ -24,7 +24,7 @@ $kpis = [
         </div>
         <div class="dash-topbar-actions">
             <a href="dashboard.php#bayar" class="dash-btn dash-btn-primary">
-                Bayar Kas Online
+                Kirim Kontribusi Kas
             </a>
             <a href="dashboard.php" class="dash-btn dash-btn-light">
                 Kembali ke Dashboard
