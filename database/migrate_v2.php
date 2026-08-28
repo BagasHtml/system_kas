@@ -12,7 +12,13 @@ function run_migrations() {
         Koneksi::executeQuery("ALTER TABLE pembayaran MODIFY COLUMN status ENUM('lunas', 'belum', 'pending') NOT NULL DEFAULT 'belum'");
     } catch (\Throwable $e) {}
 
-    // 2. Add bukti_transfer & catatan to pembayaran
+    // 2. Add metode (payment method) to pembayaran
+    $checkMetode = Koneksi::executeQuery("SHOW COLUMNS FROM pembayaran LIKE 'metode'");
+    if ($checkMetode && $checkMetode->num_rows === 0) {
+        Koneksi::executeQuery("ALTER TABLE pembayaran ADD COLUMN metode ENUM('langsung','qris','dana') NOT NULL DEFAULT 'langsung' AFTER status");
+    }
+
+    // 3. Add bukti_transfer & catatan to pembayaran
     $checkPembayaran = Koneksi::executeQuery("SHOW COLUMNS FROM pembayaran LIKE 'bukti_transfer'");
     if ($checkPembayaran && $checkPembayaran->num_rows === 0) {
         Koneksi::executeQuery("ALTER TABLE pembayaran ADD COLUMN bukti_transfer VARCHAR(255) NULL DEFAULT NULL AFTER tanggal_bayar");

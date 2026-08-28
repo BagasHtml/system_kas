@@ -3,7 +3,9 @@
 require_once __DIR__ . '/AuthController.php';
 
 /**
- * Tanggung jawab: siapkan data laporan (matriks pembayaran + ringkasan) admin.
+ * Tanggung jawab: siapkan data laporan pengeluaran (semua transaksi + filter
+ * rentang tanggal) untuk admin. Matriks pembayaran tidak lagi ada di sini;
+ * laporan berfokus pada pengeluaran.
  */
 class LaporanController
 {
@@ -11,67 +13,78 @@ class LaporanController
     {
         AuthController::requireAdmin();
 
+        date_default_timezone_set('Asia/Jakarta');
+
         $db = new Koneksi();
 
-        $resSiswa = $db::q("SELECT id, nama, nomor_absen FROM siswa ORDER BY nomor_absen ASC");
-        $siswa = $resSiswa ? $resSiswa->fetch_all(MYSQLI_ASSOC) : [];
+        /* Filter rentang tanggal (opsional). Default: otomatis dari pengeluaran
+         * pertama hingga hari ini, sehingga tanggal selalu terisi saat mencetak. */
+        $dari   = trim($_GET['dari'] ?? '');
+        $sampai = trim($_GET['sampai'] ?? '');
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $dari))   $dari = '';
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $sampai)) $sampai = '';
 
-        $resPeriode = $db::q("SELECT DISTINCT periode FROM pembayaran ORDER BY periode ASC");
-        $periode_list = [];
-        if ($resPeriode) {
-            while ($r = $resPeriode->fetch_assoc()) {
-                $periode_list[] = $r['periode'];
-            }
+        if ($dari === '' || $sampai === '') {
+            $range = $db::q("SELECT MIN(tanggal) AS mn, MAX(tanggal) AS mx FROM pengeluaran");
+            $rn = $range ? $range->fetch_assoc() : null;
+            if ($dari === '')   $dari = ($rn && $rn['mn']) ? $rn['mn'] : date('Y-m-d');
+            if ($sampai === '') $sampai = ($rn && $rn['mx']) ? $rn['mx'] : date('Y-m-d');
         }
 
-        $map = [];
-        $resMap = $db::q("SELECT siswa_id, periode, status FROM pembayaran");
-        if ($resMap) {
-            while ($r = $resMap->fetch_assoc()) {
-                $map[$r['siswa_id']][$r['periode']] = $r['status'];
-            }
+        $where  = [];
+        $params = [];
+        if ($dari !== '') {
+            $where[]  = 'tanggal >= ?';
+            $params[] = $dari;
+        }
+        if ($sampai !== '') {
+            $where[]  = 'tanggal <= ?';
+            $params[] = $sampai;
+        }
+        $whereSql = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
+
+        $pengeluaran = [];
+        if (empty($params)) {
+            $res = $db::q(
+                "SELECT id, keterangan, jumlah, kategori, tanggal, bukti_nota
+                 FROM pengeluaran ORDER BY tanggal DESC, id DESC"
+            );
+        } else {
+            $res = $db::q(
+                "SELECT id, keterangan, jumlah, kategori, tanggal, bukti_nota
+                 FROM pengeluaran $whereSql ORDER BY tanggal DESC, id DESC",
+                $params
+            );
+        }
+        if ($res) {
+            $pengeluaran = $res->fetch_all(MYSQLI_ASSOC);
         }
 
-        $resSum = $db::q("SELECT
-            IFNULL(SUM(CASE WHEN status = 'lunas' THEN jumlah ELSE 0 END), 0) AS pemasukan,
-            IFNULL(SUM(jumlah), 0) AS total_tagihan,
-            IFNULL(SUM(CASE WHEN status = 'belum' THEN jumlah ELSE 0 END), 0) AS belum_bayar
-            FROM pembayaran");
-        $sum = $resSum ? $resSum->fetch_assoc() : ['pemasukan' => 0, 'total_tagihan' => 0, 'belum_bayar' => 0];
-
-        $resOut = $db::q("SELECT IFNULL(SUM(jumlah), 0) AS total FROM pengeluaran");
-        $pengeluaran_total = $resOut ? (float)$resOut->fetch_assoc()['total'] : 0;
-
-        $saldo = (float)$sum['pemasukan'] - $pengeluaran_total;
-
-        /* Target kas (kesepakatan kelas): sisa target bila target sudah ditetapkan. */
-        $target_map = Koneksi::targetMap();
-        $total_target = Koneksi::totalTarget($target_map);
-        $ada_target = $total_target > 0;
-        $belum_bayar = $ada_target
-            ? max(0, $total_target - (float)$sum['pemasukan'])
-            : (float)$sum['belum_bayar'];
-
-        $jumlah_siswa = Koneksi::jumlahSiswa();
-        $kas_per_siswa = null;
-        if ($ada_target && $target_map) {
-            $latest_tp = max(array_keys($target_map));
-            $kas_per_siswa = (float)$target_map[$latest_tp]['per_siswa'];
+        $pengeluaran_total = 0.0;
+        $pengeluaran_count = count($pengeluaran);
+        foreach ($pengeluaran as $e) {
+            $pengeluaran_total += (float)$e['jumlah'];
         }
+
+        /* Ringkasan saldo (dukungan untuk judul laporan). */
+        $pemasukan = (float)($db::q(
+            "SELECT IFNULL(SUM(jumlah), 0) t FROM pembayaran WHERE status = 'lunas'"
+        )->fetch_assoc()['t'] ?? 0);
+        $pengeluaran_all_total = (float)($db::q(
+            "SELECT IFNULL(SUM(jumlah), 0) t FROM pengeluaran"
+        )->fetch_assoc()['t'] ?? 0);
+        $saldo = $pemasukan - $pengeluaran_all_total;
 
         return [
-            'siswa'              => $siswa,
-            'periode_list'       => $periode_list,
-            'map'                => $map,
-            'sum'                => $sum,
-            'pengeluaran_total'  => $pengeluaran_total,
-            'saldo'              => $saldo,
-            'target_map'         => $target_map,
-            'total_target'       => $total_target,
-            'ada_target'         => $ada_target,
-            'belum_bayar'        => $belum_bayar,
-            'jumlah_siswa'       => $jumlah_siswa,
-            'kas_per_siswa'      => $kas_per_siswa,
+            'pengeluaran'          => $pengeluaran,
+            'pengeluaran_total'    => $pengeluaran_total,
+            'pengeluaran_count'    => $pengeluaran_count,
+            'pengeluaran_all_total'=> $pengeluaran_all_total,
+            'pemasukan'            => $pemasukan,
+            'saldo'                => $saldo,
+            'dari'                 => $dari,
+            'sampai'               => $sampai,
+            'total_kas_siswa'      => (int)Koneksi::jumlahSiswa(),
         ];
     }
 }

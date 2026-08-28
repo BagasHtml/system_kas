@@ -2,108 +2,97 @@
 require_once __DIR__ . '/../../app/controllers/LaporanController.php';
 extract(LaporanController::handle(), EXTR_SKIP);
 
-$title = 'Laporan - Admin';
+$title = 'Laporan Pengeluaran';
 $active = 'laporan';
 
 include '../partials/header.php';
 include '../partials/admin_sidebar.php';
 include '../partials/helpers.php';
+
+$dari_label  = $dari  ? date('d M Y', strtotime($dari))  : '';
+$sampai_label = $sampai ? date('d M Y', strtotime($sampai)) : '';
 ?>
 
 <div class="main-content dash-page">
+    <!-- Header khusus saat cetak -->
+    <div class="lap-print-header">
+        <h1>Laporan Pengeluaran Kas Kelas</h1>
+        <p>Periode: <?= htmlspecialchars($dari_label) ?> - <?= htmlspecialchars($sampai_label) ?></p>
+        <p>Dicetak: <?= date('d M Y') ?></p>
+    </div>
+
     <div class="dash-topbar">
         <div>
-            <h1 class="dash-title">Laporan Kas Kelas</h1>
-            <p class="dash-subtitle">Rekap pembayaran dan saldo kas kelas</p>
+            <h1 class="dash-title">Laporan Pengeluaran Kas</h1>
+            <p class="dash-subtitle">Periode <?= htmlspecialchars($dari_label) ?> - <?= htmlspecialchars($sampai_label) ?></p>
         </div>
         <div class="dash-topbar-actions">
-            <a href="export_excel.php" class="dash-btn dash-btn-light">
-                <i class="bi bi-file-earmark-excel"></i> Ekspor Excel / CSV
-            </a>
             <button class="dash-btn dash-btn-primary" onclick="window.print()">
-                <?= ic('<path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/>', 15) ?> Cetak Laporan
+                <?= ic('<path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/>', 15) ?> Cetak
             </button>
         </div>
     </div>
 
-    <div class="dash-kpis">
-        <?php
-        $kpis = [
-            ['label' => 'Pemasukan (Terkumpul)', 'value' => rupiah((float)$sum['pemasukan']), 'tone' => 'success'],
-            ['label' => 'Pengeluaran', 'value' => rupiah($pengeluaran_total), 'tone' => 'danger'],
-            ['label' => 'Saldo Kas', 'value' => rupiah($saldo), 'tone' => 'accent'],
-            ['label' => 'Belum Terkumpul', 'value' => rupiah($belum_bayar), 'tone' => 'warn'],
-            ['label' => 'Target Kas', 'value' => rupiah($total_target), 'tone' => 'info', 'note' => $ada_target && $kas_per_siswa !== null ? rupiah($kas_per_siswa) . ' x ' . $jumlah_siswa . ' siswa' : 'Belum ditetapkan'],
-        ];
-        foreach ($kpis as $k) {
-            echo kpi($k);
-        }
-        ?>
+    <div class="lap-filterbar">
+        <form method="get" action="laporan.php">
+            <label>
+                <span>Dari</span>
+                <input type="date" name="dari" value="<?= htmlspecialchars($dari) ?>">
+            </label>
+            <label>
+                <span>Sampai</span>
+                <input type="date" name="sampai" value="<?= htmlspecialchars($sampai) ?>">
+            </label>
+            <button type="submit" class="dash-btn dash-btn-primary">Tampilkan</button>
+            <a href="laporan.php" class="dash-btn dash-btn-light">Reset</a>
+        </form>
     </div>
 
     <div class="dash-card">
-        <div class="dash-card-head">
-            <div>
-                <div class="dash-card-title">Matriks Pembayaran per Siswa</div>
-                <div class="dash-card-sub"><?= count($siswa) ?> siswa &times; <?= count($periode_list) ?> bulan</div>
-            </div>
-            <div style="display:flex;gap:8px;">
-                <a href="export_excel.php" class="dash-btn dash-btn-light">
-                    <i class="bi bi-file-earmark-excel"></i> Ekspor CSV
-                </a>
-                <button class="dash-btn dash-btn-light" onclick="window.print()">
-                    <?= ic('<path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/>', 15) ?> Cetak
-                </button>
-            </div>
-        </div>
         <div class="dash-table-wrap">
-            <table class="dash-table lap-matrix">
+            <table class="dash-table lap-table">
                 <thead>
                     <tr>
-                        <th style="width:44px;">No</th>
-                        <th>Nama Siswa</th>
-                        <?php foreach ($periode_list as $per): ?>
-                            <th style="text-align:center;"><?= htmlspecialchars(Koneksi::periodeShortLabel($per)) ?></th>
-                        <?php endforeach; ?>
+                        <th style="width:40px;">No</th>
+                        <th style="width:100px;">Tanggal</th>
+                        <th style="width:120px;">Kategori</th>
+                        <th>Keterangan</th>
+                        <th style="text-align:right;width:140px;padding-right:18px;">Jumlah</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php if (empty($siswa) || empty($periode_list)): ?>
+                    <?php if (empty($pengeluaran)): ?>
                         <tr>
-                            <td colspan="<?= 2 + count($periode_list) ?>">
-                                <div class="dash-empty">
-                                    <div class="t">Belum ada data</div>
-                                    <div class="s">Belum ada data untuk dibuatkan laporan</div>
+                            <td colspan="5">
+                                <div class="dash-empty" style="padding:32px 16px;">
+                                    <div class="t">Tidak ada data pengeluaran</div>
+                                    <div class="s">Belum ada pengeluaran pada periode ini</div>
                                 </div>
                             </td>
                         </tr>
                     <?php else: ?>
                         <?php $no = 1; ?>
-                        <?php foreach ($siswa as $s): ?>
+                        <?php foreach ($pengeluaran as $e): ?>
                             <tr>
-                                <td style="color:var(--text-muted);"><?= $no++ ?></td>
+                                <td><?= $no++ ?></td>
+                                <td><?= date('d/m/Y', strtotime($e['tanggal'])) ?></td>
                                 <td>
-                                    <div class="dash-cell-name">
-                                        <div class="dash-cell-avatar" style="background:var(--accent-soft);color:var(--accent);">
-                                            <?= strtoupper(substr($s['nama'], 0, 1)) ?>
-                                        </div>
-                                        <span class="nm"><?= htmlspecialchars($s['nama']) ?></span>
-                                    </div>
+                                    <span class="lap-cat"><?= htmlspecialchars($e['kategori'] ?? 'Lainnya') ?></span>
                                 </td>
-                                <?php foreach ($periode_list as $per): ?>
-                                    <td style="text-align:center;">
-                                        <?php $st = $map[$s['id']][$per] ?? 'belum'; ?>
-                                        <?php if ($st === 'lunas'): ?>
-                                            <span class="lap-cell-lunas"><i class="bi bi-check-circle-fill"></i> Terkumpul</span>
-                                        <?php else: ?>
-                                            <span class="lap-cell-belum"><i class="bi bi-x-circle-fill"></i> Belum Terkumpul</span>
-                                        <?php endif; ?>
-                                    </td>
-                                <?php endforeach; ?>
+                                <td><?= htmlspecialchars($e['keterangan']) ?></td>
+                                <td class="num">- <?= rupiah((float)$e['jumlah']) ?></td>
                             </tr>
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </tbody>
+                <?php if (!empty($pengeluaran)): ?>
+                <tfoot>
+                    <tr>
+                        <td colspan="4" class="num">Total Pengeluaran</td>
+                        <td class="num">- <?= rupiah($pengeluaran_total) ?></td>
+                    </tr>
+                </tfoot>
+                <?php endif; ?>
             </table>
         </div>
     </div>

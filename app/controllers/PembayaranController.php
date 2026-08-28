@@ -1,4 +1,4 @@
-<?php
+ <?php
 
 require_once __DIR__ . '/AuthController.php';
 
@@ -128,6 +128,7 @@ class PembayaranController
             $periode   = trim($_POST['periode'] ?? '');
             $jumlah    = (float)($_POST['jumlah'] ?? 0);
             $status    = in_array($_POST['status'] ?? '', ['lunas', 'pending', 'belum']) ? $_POST['status'] : 'belum';
+            $metode    = in_array($_POST['metode'] ?? '', ['langsung', 'qris', 'dana'], true) ? $_POST['metode'] : 'langsung';
             $tanggal   = trim($_POST['tanggal_bayar'] ?? '');
             $tanggal   = $tanggal !== '' ? $tanggal : null;
 
@@ -147,8 +148,8 @@ class PembayaranController
 
             if ($id > 0) {
                 $db::q(
-                    "UPDATE pembayaran SET siswa_id = ?, periode = ?, jumlah = ?, status = ?, tanggal_bayar = ? WHERE id = ?",
-                    [$siswa_id, $periode_db, $jumlah, $status, $tanggal, $id]
+                    "UPDATE pembayaran SET siswa_id = ?, periode = ?, jumlah = ?, status = ?, metode = ?, tanggal_bayar = ? WHERE id = ?",
+                    [$siswa_id, $periode_db, $jumlah, $status, $metode, $tanggal, $id]
                 );
                 Koneksi::setFlash('success', 'Data pembayaran berhasil diperbarui.');
             } else {
@@ -159,8 +160,8 @@ class PembayaranController
                     exit;
                 }
                 $db::q(
-                    "INSERT INTO pembayaran (siswa_id, periode, jumlah, status, tanggal_bayar) VALUES (?, ?, ?, ?, ?)",
-                    [$siswa_id, $periode_db, $jumlah, $status, $tanggal]
+                    "INSERT INTO pembayaran (siswa_id, periode, jumlah, status, metode, tanggal_bayar) VALUES (?, ?, ?, ?, ?, ?)",
+                    [$siswa_id, $periode_db, $jumlah, $status, $metode, $tanggal]
                 );
                 Koneksi::setFlash('success', 'Data pembayaran berhasil ditambahkan.');
             }
@@ -172,7 +173,7 @@ class PembayaranController
         $per_page = 10;
         $page = max(1, (int)($_GET['hal'] ?? 1));
 
-        $sql = "SELECT p.id, p.siswa_id, p.periode, p.jumlah, p.status, p.tanggal_bayar, s.nama, s.nomor_absen
+        $sql = "SELECT p.id, p.siswa_id, p.periode, p.jumlah, p.status, p.metode, p.tanggal_bayar, s.nama, s.nomor_absen
                 FROM pembayaran p
                 INNER JOIN siswa s ON s.id = p.siswa_id";
         $conditions = [];

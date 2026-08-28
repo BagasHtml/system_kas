@@ -23,6 +23,87 @@ include '../partials/helpers.php';
 
     <?php Koneksi::renderFlash(); ?>
 
+    <?php if (!empty($pending_list)): ?>
+        <div class="dash-card" id="verifikasi" style="margin-bottom:22px;border:1px solid #fde68a;background:#fffdf5;">
+            <div class="dash-card-head">
+                <div>
+                    <div class="dash-card-title" style="display:flex;align-items:center;gap:8px;">
+                        <i class="bi bi-clock-history" style="color:#b45309;"></i> Konfirmasi Pembayaran Masuk
+                        <span class="dash-status-pill warn" style="margin-left:4px;"><?= count($pending_list) ?> menunggu</span>
+                    </div>
+                    <div class="dash-card-sub">Setujui agar pembayaran terhitung sebagai lunas dan progres target kas ikut bertambah</div>
+                </div>
+            </div>
+            <div class="dash-table-wrap">
+                <table class="dash-table">
+                    <thead>
+                        <tr>
+                            <th>Nama Siswa</th>
+                            <th>Bulan</th>
+                            <th style="text-align:right;">Jumlah</th>
+                            <th>Metode</th>
+                            <th>Bukti</th>
+                            <th style="text-align:center;width:190px;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($pending_list as $pl): ?>
+                            <tr>
+                                <td>
+                                    <div class="dash-cell-name">
+                                        <div class="dash-cell-avatar" style="background:#fffcf5;color:#b45309;">
+                                            <?= strtoupper(substr($pl['nama'], 0, 1)) ?>
+                                        </div>
+                                        <div>
+                                            <span class="nm"><?= htmlspecialchars($pl['nama']) ?></span>
+                                            <span class="ab">Absen <?= (int)$pl['nomor_absen'] ?></span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><?= htmlspecialchars(Koneksi::periodeLabel($pl['periode'])) ?></td>
+                                <td style="text-align:right;"><span class="dash-amount"><?= rupiah((float)$pl['jumlah']) ?></span></td>
+                                <td><?= metode_pill($pl['metode'] ?? null) ?></td>
+                                <td>
+                                    <?php if (!empty($pl['bukti_transfer'])): ?>
+                                        <button class="dash-btn dash-btn-light dash-btn-sm"
+                                                data-bs-toggle="modal" data-bs-target="#modalBuktiVerifikasi"
+                                                data-img="<?= BASE_URL . '/' . htmlspecialchars($pl['bukti_transfer']) ?>"
+                                                data-title="Bukti Transfer <?= htmlspecialchars($pl['nama']) ?>"
+                                                data-catatan="<?= htmlspecialchars($pl['catatan'] ?? '') ?>">
+                                            <i class="bi bi-image"></i> Lihat
+                                        </button>
+                                    <?php else: ?>
+                                        <span style="color:var(--text-muted);font-size:12px;">-</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td style="text-align:center;">
+                                    <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
+                                        <form method="post" action="pembayaran.php<?= $back ?>" style="display:inline;"
+                                              onsubmit="return confirmDelete(event, 'Setujui pembayaran <?= htmlspecialchars($pl['nama']) ?> bulan <?= htmlspecialchars(Koneksi::periodeLabel($pl['periode'])) ?>?')">
+                                            <?= Koneksi::csrfField() ?>
+                                            <input type="hidden" name="setuju_verifikasi" value="<?= $pl['id'] ?>">
+                                            <button type="submit" class="dash-btn dash-btn-primary dash-btn-sm">
+                                                <i class="bi bi-check2-circle"></i> Setujui
+                                            </button>
+                                        </form>
+                                        <form method="post" action="pembayaran.php<?= $back ?>" style="display:inline;"
+                                              onsubmit="return confirmDelete(event, 'Tolak konfirmasi pembayaran <?= htmlspecialchars($pl['nama']) ?>?')">
+                                            <?= Koneksi::csrfField() ?>
+                                            <input type="hidden" name="tolak_verifikasi" value="<?= $pl['id'] ?>">
+                                            <button type="submit" class="dash-btn dash-btn-danger dash-btn-sm">
+                                                <i class="bi bi-x-circle"></i> Tolak
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    <?php endif; ?>
+
     <div class="dash-card target-card" style="margin-bottom:22px;">
         <div class="dash-card-head" style="margin-bottom:0;">
             <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
@@ -152,7 +233,7 @@ include '../partials/helpers.php';
                                             <span class="dash-status-pill warn"><i class="bi bi-hourglass-split"></i> <?= $tpct ?>%</span>
                                         </div>
                                         <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">
-                                            Terkumpul <?= rupiah($tc) ?> dari <?= rupiah($tt) ?>
+                                            Sudah disetorkan <?= rupiah($tc) ?> dari <?= rupiah($tt) ?>
                                         </div>
                                         <div class="target-mini-track"><div class="target-mini-fill" style="width:<?= $tpct ?>%;"></div></div>
                                     <?php endif; ?>
@@ -221,13 +302,14 @@ include '../partials/helpers.php';
                         <th>Jumlah</th>
                         <th>Tanggal Bayar</th>
                         <th>Status</th>
+                        <th>Metode</th>
                         <th style="text-align:center;width:130px;">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($data)): ?>
                         <tr>
-                            <td colspan="7">
+                            <td colspan="8">
                                 <div class="dash-empty">
                                     <div class="t"><?= $cari !== '' ? 'Tidak ada hasil untuk "' . htmlspecialchars($cari) . '"' : 'Belum ada data pembayaran' ?></div>
                                     <div class="s"><?= $cari === '' ? 'Catat pembayaran siswa melalui tombol Tambah' : 'Coba kata kunci lain' ?></div>
@@ -254,6 +336,7 @@ include '../partials/helpers.php';
                                 <td><span class="dash-amount"><?= rupiah((float)$p['jumlah']) ?></span></td>
                                 <td style="color:var(--text-secondary);"><?= $p['tanggal_bayar'] ? date('d/m/Y', strtotime($p['tanggal_bayar'])) : '-' ?></td>
                                 <td><?= status_pill($p['status']) ?></td>
+                                <td><?= metode_pill($p['metode'] ?? null) ?></td>
                                 <td style="text-align:center;">
                                     <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
                                         <button class="dash-btn dash-btn-light dash-btn-sm"
@@ -263,6 +346,7 @@ include '../partials/helpers.php';
                                                 data-periode="<?= htmlspecialchars($p['periode']) ?>"
                                                 data-jumlah="<?= $p['jumlah'] ?>"
                                                 data-status="<?= $p['status'] ?>"
+                                                data-metode="<?= htmlspecialchars($p['metode'] ?? 'langsung') ?>"
                                                 data-tanggal="<?= $p['tanggal_bayar'] ?? '' ?>">
                                             <i class="bi bi-pencil"></i> Edit
                                         </button>
@@ -326,9 +410,17 @@ include '../partials/helpers.php';
                     <div class="mb-3">
                         <label class="form-label">Status</label>
                         <select class="form-select" name="status" id="status" onchange="toggleTanggal()">
-                            <option value="belum">Belum Terkumpul</option>
+                            <option value="belum">Belum disetorkan</option>
                             <option value="pending">Menunggu Verifikasi (Pending)</option>
-                            <option value="lunas">Terkumpul</option>
+                            <option value="lunas">Sudah disetorkan</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Metode Pembayaran</label>
+                        <select class="form-select" name="metode" id="metode">
+                            <option value="langsung">Langsung / Tunai</option>
+                            <option value="qris">QRIS</option>
+                            <option value="dana">Send DANA</option>
                         </select>
                     </div>
                     <div class="mb-3">
@@ -425,6 +517,7 @@ document.getElementById('modalPembayaran')?.addEventListener('show.bs.modal', fu
         document.getElementById('periode').value = btn.dataset.periode || '';
         document.getElementById('jumlah').value = btn.dataset.jumlah || '';
         document.getElementById('status').value = btn.dataset.status || 'belum';
+        document.getElementById('metode').value = btn.dataset.metode || 'langsung';
         document.getElementById('tanggal_bayar').value = btn.dataset.tanggal || '';
     } else {
         document.getElementById('modalTitle').textContent = 'Tambah Pembayaran';
@@ -433,6 +526,7 @@ document.getElementById('modalPembayaran')?.addEventListener('show.bs.modal', fu
         document.getElementById('periode').value = '';
         document.getElementById('jumlah').value = '';
         document.getElementById('status').value = 'belum';
+        document.getElementById('metode').value = 'langsung';
         document.getElementById('tanggal_bayar').value = '';
     }
 });

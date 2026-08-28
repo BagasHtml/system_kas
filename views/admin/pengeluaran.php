@@ -23,6 +23,9 @@ $kpis = [
             <p class="dash-subtitle">Catat pengeluaran uang kas kelas secara terukur dan transparan</p>
         </div>
         <div class="dash-topbar-actions">
+            <a href="laporan.php" class="dash-btn dash-btn-light">
+                <?= ic('<path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/>', 15) ?> Cetak Laporan
+            </a>
             <button class="dash-btn dash-btn-primary" data-bs-toggle="modal" data-bs-target="#modalPengeluaran">
                 <?= ic('<path d="M12 5v14M5 12h14"/>', 15) ?> Tambah Pengeluaran
             </button>
@@ -63,13 +66,13 @@ $kpis = [
             <table class="dash-table">
                 <thead>
                     <tr>
-                        <th style="width:50px;">No</th>
-                        <th style="width:110px;">Tanggal</th>
-                        <th style="width:120px;">Kategori</th>
+                        <th style="width:44px;">No</th>
+                        <th style="width:96px;">Tanggal</th>
+                        <th style="width:104px;">Kategori</th>
                         <th>Keterangan</th>
-                        <th style="text-align:center;width:80px;">Nota</th>
-                        <th style="text-align:right;">Jumlah</th>
-                        <th style="text-align:center;width:120px;">Aksi</th>
+                        <th style="text-align:center;width:70px;">Nota</th>
+                        <th style="text-align:right;width:120px;padding-right:16px;">Jumlah</th>
+                        <th style="text-align:center;width:110px;">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -106,7 +109,7 @@ $kpis = [
                                         <span style="color:var(--text-muted);font-size:12px;">-</span>
                                     <?php endif; ?>
                                 </td>
-                                <td style="text-align:right;"><span class="dash-amount" style="color:var(--danger);">- <?= rupiah((float)$p['jumlah']) ?></span></td>
+                                <td style="text-align:right;padding-right:16px;"><span class="dash-amount" style="color:var(--danger);">- <?= rupiah((float)$p['jumlah']) ?></span></td>
                                 <td style="text-align:center;">
                                     <div style="display:flex;gap:6px;justify-content:center;">
                                         <button class="dash-btn dash-btn-light" style="padding:6px 10px;"

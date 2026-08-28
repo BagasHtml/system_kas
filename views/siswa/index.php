@@ -1,5 +1,9 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) session_start();
+if (isset($_SESSION['siswa_id'])) {
+    header("Location: dashboard.php");
+    exit;
+}
 $title = 'Masuk - Siswa';
 include '../partials/header.php';
 ?>
@@ -37,6 +41,7 @@ include '../partials/header.php';
             <?php endif; ?>
 
             <form action="../../function/search.php" method="POST">
+                <?php require_once __DIR__ . '/../../database/db.php'; echo Koneksi::csrfField(); ?>
                 <div class="auth-field">
                     <label for="nama">Nama Lengkap</label>
                     <div class="auth-input">

@@ -1,9 +1,6 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) session_start();
-if (!isset($_SESSION['username'])) {
-    header("Location: login.php");
-    exit;
-}
+require_once __DIR__ . '/../../app/controllers/AuthController.php';
+AuthController::requireAdmin();
 
 require_once '../../database/db.php';
 $db = new Koneksi();

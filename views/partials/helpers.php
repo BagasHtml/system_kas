@@ -50,12 +50,26 @@ if (!function_exists('status_pill')) {
     function status_pill(string $status): string
     {
         if ($status === 'lunas') {
-            return '<span class="text-status lunas">Terkumpul</span>';
+            return '<span class="text-status lunas">Sudah Disetorkan</span>';
         }
         if ($status === 'pending') {
             return '<span class="text-status pending" style="background:#fff8e6;color:#b45309;border:1px solid #fef3c7;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:4px;"><i class="bi bi-clock-history"></i> Pending</span>';
         }
-        return '<span class="text-status belum">Belum Terkumpul</span>';
+        return '<span class="text-status belum">Belum Disetorkan</span>';
+    }
+}
+
+if (!function_exists('metode_pill')) {
+    function metode_pill(?string $metode): string
+    {
+        $m = $metode ?: 'langsung';
+        if ($m === 'dana') {
+            return '<span style="background:#e8f1ff;color:#1565d8;border:1px solid #d3e5ff;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:4px;"><i class="bi bi-send"></i> DANA</span>';
+        }
+        if ($m === 'qris') {
+            return '<span style="background:#f4ecff;color:#7c3aed;border:1px solid #e6d9ff;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:4px;"><i class="bi bi-qr-code"></i> QRIS</span>';
+        }
+        return '<span style="background:#e9f9f3;color:#0e9f6e;border:1px solid #d2f2e4;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:4px;"><i class="bi bi-cash-coin"></i> Langsung</span>';
     }
 }
 

@@ -50,7 +50,7 @@ $kpis = [
                     <div style="font-size:12px;color:#b45309;">Siswa telah mengirim bukti transfer dan menunggu persetujuan Anda.</div>
                 </div>
             </div>
-            <a href="pembayaran.php" class="dash-btn dash-btn-primary" style="background:#b45309;border-color:#b45309;padding:7px 16px;font-size:12px;white-space:nowrap;">
+            <a href="pembayaran.php#verifikasi" class="dash-btn dash-btn-primary" style="background:#b45309;border-color:#b45309;padding:7px 16px;font-size:12px;white-space:nowrap;">
                 <i class="bi bi-check2-square"></i> Ke Halaman Verifikasi
             </a>
         </div>
@@ -127,7 +127,7 @@ $kpis = [
                     <?php elseif ($pemasukan >= $total_target): ?>
                         <span class="dash-status-pill success"><i class="bi bi-check-circle-fill"></i> Target Tercapai</span>
                     <?php else: ?>
-                        <span class="dash-status-pill warn"><i class="bi bi-hourglass-split"></i> <?= $pct_lunas ?>% Terkumpul</span>
+                        <span class="dash-status-pill warn"><i class="bi bi-hourglass-split"></i> <?= $pct_lunas ?>% Disetorkan</span>
                     <?php endif; ?>
                 </div>
 
@@ -140,12 +140,12 @@ $kpis = [
                     <div class="dash-legend">
                         <div class="dash-legend-item">
                             <span class="sw" style="background:var(--accent);"></span>
-                            <span class="name">Terkumpul<span class="sub"><?= $lunas_count ?> bulan</span></span>
+                            <span class="name">Sudah Disetorkan<span class="sub"><?= $lunas_count ?> bulan</span></span>
                             <span class="val"><?= rupiah($pemasukan) ?></span>
                         </div>
                         <div class="dash-legend-item">
                             <span class="sw" style="background:var(--yellow);"></span>
-                            <span class="name">Belum Terkumpul<span class="sub"><?= $ada_target ? 'sisa target' : $belum_count . ' bulan' ?></span></span>
+                            <span class="name">Belum Disetorkan<span class="sub"><?= $ada_target ? 'sisa target' : $belum_count . ' bulan' ?></span></span>
                             <span class="val"><?= rupiah($belum) ?></span>
                         </div>
                     </div>
@@ -153,7 +153,7 @@ $kpis = [
 
                 <div class="dash-progress">
                     <div class="top">
-                        <span class="lbl">Terkumpul</span>
+                        <span class="lbl">Disetorkan</span>
                         <span class="val"><?= $pct_lunas ?>%</span>
                     </div>
                     <div class="track">

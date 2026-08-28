@@ -2,7 +2,7 @@
 if (session_status() === PHP_SESSION_NONE) session_start();
 include_once '../../database/db.php';
 
-$username = $_SESSION['username'];
+$username = $_SESSION['nama'] ?? $_SESSION['username'] ?? 'Bendahara';
 ?>
 <nav class="admin-sidebar">
     <div class="sidebar-action">
@@ -39,10 +39,9 @@ $username = $_SESSION['username'];
         <a class="nav-link <?= $active == 'pengeluaran' ? 'active' : '' ?>" href="pengeluaran.php">
             <i class="bi bi-cart-dash-fill"></i> Pengeluaran
         </a>
-
-        <div class="nav-section">Lainnya</div>
-
-        <a class="nav-link <?= $active == 'laporan' ? 'active' : '' ?>" href="laporan.php"><i class="bi bi-file-text"></i> Laporan</a>
+        <a class="nav-link <?= $active == 'laporan' ? 'active' : '' ?>" href="laporan.php">
+            <i class="bi bi-file-text"></i> Laporan
+        </a>
 
         <div class="nav-bottom">
             <a class="nav-link" href="#">

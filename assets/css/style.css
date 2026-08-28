@@ -2419,7 +2419,11 @@ body {
 
 .dash-cell-name .nm { font-weight: 600; display: block; line-height: 1.2; }
 .dash-cell-name .ab { font-size: 11px; color: var(--text-muted); }
-.dash-amount { font-weight: 700; }
+.dash-amount {
+    font-weight: 700;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
 
 /* ---- Pills ---- */
 
@@ -2613,11 +2617,99 @@ body {
 .lap-cell-lunas { color: var(--success); font-weight: 700; }
 .lap-cell-belum { color: var(--danger); font-weight: 700; }
 
+/* Header laporan (tampil saat cetak) */
+.lap-print-header {
+    display: none;
+}
+
+/* Filter rentang tanggal */
+.lap-filterbar {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 18px;
+    margin-bottom: 16px;
+}
+.lap-filterbar form {
+    display: flex;
+    align-items: flex-end;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin: 0;
+}
+.lap-filterbar label {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.lap-filterbar label span {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+.lap-filterbar input[type="date"] {
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--body-bg);
+    color: var(--text-primary);
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color .15s, box-shadow .15s;
+}
+.lap-filterbar input[type="date"]:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+/* Kategori pada tabel */
+.lap-cat {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 3px 10px;
+    border-radius: 12px;
+    white-space: nowrap;
+}
+
+/* Tabel laporan yang lebih rapih */
+.lap-table th, .lap-table td {
+    white-space: nowrap;
+    padding: 12px 12px;
+    vertical-align: middle;
+}
+.lap-table td:nth-child(4) {
+    white-space: normal;
+    min-width: 180px;
+}
+.lap-table th { font-size: 12px; }
+.lap-table td.num, .lap-table th.num { text-align: right; }
+.lap-table td.num {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    padding-right: 18px;
+}
+.lap-table tfoot td {
+    border-top: 2px solid var(--border);
+    font-weight: 700;
+}
+
 @media print {
-    .admin-sidebar, .dash-topbar-actions, .dash-btn, .modal { display: none !important; }
-    .main-content { margin-left: 0 !important; padding: 0 !important; }
+    .admin-sidebar, .dash-topbar, .lap-filterbar, .dash-topbar-actions, .dash-btn, .modal {
+        display: none !important;
+    }
+    .main-content {
+        margin-left: 0 !important;
+        padding: 0 !important;
+    }
     body { background: #fff; }
     .dash-card { border: 1px solid #ddd; box-shadow: none; }
+    .lap-print-header { display: block; margin-bottom: 20px; }
+    .lap-print-header h1 { font-size: 20px; margin: 0 0 4px; color: #000; }
+    .lap-print-header p { margin: 2px 0; color: #333; font-size: 13px; }
 }
 
 /* ==========================================================================

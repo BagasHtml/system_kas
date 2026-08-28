@@ -54,51 +54,6 @@ $banner = [
         <?php endforeach; ?>
     </div>
 
-    <div class="dash-card">
-        <div class="dash-card-head">
-            <div>
-                <div class="dash-card-title">Pemasukan Kas per Bulan</div>
-                <div class="dash-card-sub">Total kontribusi kelas terkumpul tahun <?= date('Y') ?></div>
-            </div>
-            <div class="dash-trends">
-                <span class="dash-trend <?= $trend_up ? 'up' : 'down' ?>"><?= $trend_up ? '&uarr;' : '&darr;' ?> <?= $trend_txt ?>%</span>
-                <span class="dash-year-label">Tahun <?= date('Y') ?></span>
-            </div>
-        </div>
-
-        <?php if (!$chart_any): ?>
-            <div class="dash-chart-svg">
-                <div class="dash-empty-note">Belum ada pembayaran tercatat</div>
-            </div>
-        <?php else: ?>
-            <div class="dash-chart-svg">
-                <svg viewBox="0 0 <?= $CW ?> <?= $CH ?>" role="img" aria-label="Grafik pemasukan per bulan">
-                    <defs>
-                        <linearGradient id="dashAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stop-color="#00A37A" stop-opacity="0.22"/>
-                            <stop offset="100%" stop-color="#00A37A" stop-opacity="0.02"/>
-                        </linearGradient>
-                    </defs>
-                    <?php for ($i = 0; $i <= 4; $i++): ?>
-                        <?php $gy = $CPT + ($CH - $CPT - $CPB) * ($i / 4); ?>
-                        <line class="dash-grid-line" x1="<?= $CPL ?>" y1="<?= round($gy, 1) ?>" x2="<?= $CW - $CPR ?>" y2="<?= round($gy, 1) ?>"/>
-                        <text class="dash-y-label" x="<?= $CPL - 8 ?>" y="<?= round($gy, 1) + 3 ?>" text-anchor="end"><?= shortnum($max_chart * (1 - $i / 4)) ?></text>
-                    <?php endfor; ?>
-                    <path class="dash-line-area" d="<?= $area_path ?>"/>
-                    <path class="dash-line" d="<?= $smooth_path ?>"/>
-                    <?php foreach ($pts as $idx => $pt): ?>
-                        <circle class="dash-dot" cx="<?= $pt[0] ?>" cy="<?= $pt[1] ?>" r="3.5">
-                            <title><?= $bulan[$idx] ?>: Rp <?= number_format($chart[$idx + 1], 0, ',', '.') ?></title>
-                        </circle>
-                    <?php endforeach; ?>
-                    <?php foreach ($pts as $idx => $pt): ?>
-                        <text class="dash-x-label" x="<?= $pt[0] ?>" y="<?= $CH - 10 ?>" text-anchor="middle"><?= $bulan[$idx] ?></text>
-                    <?php endforeach; ?>
-                </svg>
-            </div>
-        <?php endif; ?>
-    </div>
-
     <div class="dash-charts">
         <div class="dash-card" id="bayar">
             <div class="dash-card-head">
@@ -171,6 +126,14 @@ $banner = [
                         <label class="form-label" style="font-size:12px;font-weight:600;">Jumlah yang ditransfer (Rp)</label>
                         <input type="number" name="jumlah" class="form-control form-control-sm" placeholder="20000" min="1000" required style="border-radius:8px;">
                     </div>
+                    <div>
+                        <label class="form-label" style="font-size:12px;font-weight:600;">Metode Pembayaran</label>
+                        <select name="metode" class="form-select form-select-sm" required style="border-radius:8px;">
+                            <option value="dana">Send DANA</option>
+                            <option value="qris">QRIS</option>
+                            <option value="langsung">Langsung / Tunai ke Bendahara</option>
+                        </select>
+                    </div>
                     <div style="grid-column: 1 / -1;">
                         <label class="form-label" style="font-size:12px;font-weight:600;">Upload Foto Bukti Transfer (JPG/PNG/WEBP)</label>
                         <input type="file" name="bukti_transfer" class="form-control form-control-sm" accept="image/*" required style="border-radius:8px;">
@@ -237,6 +200,12 @@ $banner = [
                         <span class="val <?= $kelas_remainder <= 0 ? 'up' : 'warn' ?>"><?= $kelas_remainder <= 0 ? 'Tercapai' : rupiah($kelas_remainder) ?></span>
                     </div>
                 </div>
+
+                <?php if ($pending_saya > 0): ?>
+                    <div style="margin-top:14px;padding:10px 14px;border-radius:10px;background:#fffcf5;border:1px solid #fef3c7;font-size:12px;color:#92400e;display:flex;align-items:center;gap:8px;">
+                        <i class="bi bi-clock-history"></i> <?= $pending_saya ?> konfirmasi kas kamu menunggu verifikasi bendahara dan belum dihitung ke target.
+                    </div>
+                <?php endif; ?>
             <?php endif; ?>
         </div>
     </div>
@@ -262,14 +231,15 @@ $banner = [
                 <div class="dash-table-wrap">
                     <table class="dash-table">
                         <thead>
-                            <tr>
-                                <th style="width:50px;">No</th>
-                                <th>Bulan</th>
-                                <th>Jumlah</th>
-                                <th>Tanggal</th>
-                                <th>Status</th>
-                                <th style="text-align:center;">Bukti</th>
-                            </tr>
+                                <tr>
+                                    <th style="width:50px;">No</th>
+                                    <th>Bulan</th>
+                                    <th>Jumlah</th>
+                                    <th>Tanggal</th>
+                                    <th>Status</th>
+                                    <th>Metode</th>
+                                    <th style="text-align:center;">Bukti</th>
+                                </tr>
                         </thead>
                         <tbody>
                             <?php $no = 1; ?>
@@ -280,6 +250,7 @@ $banner = [
                                     <td><span class="dash-amount"><?= rupiah((float)$p['jumlah']) ?></span></td>
                                     <td><?= $p['tanggal_bayar'] ? date('d/m/Y', strtotime($p['tanggal_bayar'])) : '-' ?></td>
                                     <td><?= status_pill($p['status']) ?></td>
+                                    <td><?= metode_pill($p['metode'] ?? null) ?></td>
                                     <td style="text-align:center;">
                                         <?php if (!empty($p['bukti_transfer'])): ?>
                                             <button class="dash-btn dash-btn-light" style="padding:4px 8px;font-size:12px;"

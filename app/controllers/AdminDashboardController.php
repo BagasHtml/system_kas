@@ -76,7 +76,7 @@ class AdminDashboardController
         $chart_any = array_sum($chart) > 0;
 
         $bulan = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-        $username = htmlspecialchars($_SESSION['username'] ?? 'Admin');
+        $username = htmlspecialchars($_SESSION['nama'] ?? $_SESSION['username'] ?? 'Bendahara');
 
         $cur_m = (int)date('n');
         $prev_m = $cur_m - 1;

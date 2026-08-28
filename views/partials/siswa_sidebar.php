@@ -26,6 +26,13 @@ if (session_status() === PHP_SESSION_NONE) session_start();
             <i class="bi bi-cart-dash-fill"></i> Pengeluaran
         </a>
 
+        <?php if (!empty($_SESSION['is_bendahara'])): ?>
+        <div class="nav-section">Admin</div>
+        <a class="nav-link <?= ($active ?? '') == 'admin' ? 'active' : '' ?>" href="../admin/dashboard.php">
+            <i class="bi bi-shield-lock-fill"></i> Dashboard Bendahara
+        </a>
+        <?php endif; ?>
+
         <div class="nav-bottom">
             <a class="nav-link" href="#">
                 <i class="bi bi-person-circle"></i> <?= htmlspecialchars($_SESSION['nama'] ?? 'Siswa') ?>

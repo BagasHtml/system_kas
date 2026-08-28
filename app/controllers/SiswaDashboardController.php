@@ -29,6 +29,7 @@ class SiswaDashboardController
             $periode = trim($_POST['periode'] ?? '');
             $jumlah  = (float)($_POST['jumlah'] ?? 0);
             $catatan = trim($_POST['catatan'] ?? '');
+            $metode  = in_array($_POST['metode'] ?? '', ['langsung', 'qris', 'dana'], true) ? $_POST['metode'] : 'dana';
 
             if (!preg_match('/^\d{4}-\d{2}$/', $periode) || $jumlah <= 0) {
                 Koneksi::setFlash('error', 'Pilih bulan dan jumlah pembayaran yang valid.');
@@ -62,10 +63,10 @@ class SiswaDashboardController
             }
 
             $db::q(
-                "INSERT INTO pembayaran (siswa_id, periode, jumlah, status, tanggal_bayar, bukti_transfer, catatan)
-                 VALUES (?, ?, ?, 'pending', NOW(), ?, ?)
-                 ON DUPLICATE KEY UPDATE jumlah = ?, status = 'pending', tanggal_bayar = NOW(), bukti_transfer = ?, catatan = ?",
-                [$siswa_id, $periode, $jumlah, $bukti_path, $catatan, $jumlah, $bukti_path, $catatan]
+                "INSERT INTO pembayaran (siswa_id, periode, jumlah, status, metode, tanggal_bayar, bukti_transfer, catatan)
+                 VALUES (?, ?, ?, 'pending', ?, NOW(), ?, ?)
+                 ON DUPLICATE KEY UPDATE jumlah = ?, status = 'pending', metode = ?, tanggal_bayar = NOW(), bukti_transfer = ?, catatan = ?",
+                [$siswa_id, $periode, $jumlah, $metode, $bukti_path, $catatan, $jumlah, $metode, $bukti_path, $catatan]
             );
 
             Koneksi::setFlash('success', 'Konfirmasi pembayaran berhasil dikirim! Menunggu verifikasi dari bendahara.');
@@ -76,7 +77,7 @@ class SiswaDashboardController
         $pembayaran = [];
         if ($siswa_id > 0) {
             $pembayaran = $db::q(
-                "SELECT id, periode, jumlah, status, tanggal_bayar, bukti_transfer, catatan
+                "SELECT id, periode, jumlah, status, metode, tanggal_bayar, bukti_transfer, catatan
                  FROM pembayaran WHERE siswa_id = ? ORDER BY id DESC LIMIT 24",
                 [$siswa_id]
             )->fetch_all(MYSQLI_ASSOC);
@@ -94,18 +95,30 @@ class SiswaDashboardController
             }
         }
 
-        /* Target kas kelas (kesepakatan kelas, diatur bendahara). */
+        /* Target kas kelas (kesepakatan kelas, diatur bendahara).
+         * Terkumpul hanya dihitung dari pembayaran lunas pada periode yang ditargetkan,
+         * konsisten dengan perhitungan di halaman pembayaran admin. */
         $target_map = Koneksi::targetMap();
         $total_target = Koneksi::totalTarget($target_map);
         $ada_target = $total_target > 0;
         $kelas_collected = 0.0;
         $kelas_remainder = 0.0;
         if ($ada_target) {
-            $kc = $db::q("SELECT COALESCE(SUM(jumlah), 0) t FROM pembayaran WHERE status = 'lunas'")->fetch_assoc();
+            $tp_keys = array_keys($target_map);
+            $kc = $db::q(
+                "SELECT COALESCE(SUM(jumlah), 0) t FROM pembayaran
+                 WHERE status = 'lunas' AND periode IN (" . implode(',', array_fill(0, count($tp_keys), '?')) . ")",
+                $tp_keys
+            )->fetch_assoc();
             $kelas_collected = (float)($kc['t'] ?? 0);
             $kelas_remainder = max(0, $total_target - $kelas_collected);
         }
         $pct_kelas = $ada_target ? min(100, round($kelas_collected / $total_target * 100)) : 0;
+
+        $pending_saya = (int)($db::q(
+            "SELECT COUNT(*) c FROM pembayaran WHERE siswa_id = ? AND status = 'pending'",
+            [$siswa_id]
+        )->fetch_assoc()['c'] ?? 0);
 
         $jumlah_siswa = (int)Koneksi::jumlahSiswa();
         $siswa_kontribusi = (int)($db::q("SELECT COUNT(DISTINCT siswa_id) c FROM pembayaran WHERE status = 'lunas'")->fetch_assoc()['c'] ?? 0);
@@ -175,6 +188,7 @@ class SiswaDashboardController
             'kelas_collected'       => $kelas_collected,
             'kelas_remainder'       => $kelas_remainder,
             'pct_kelas'             => $pct_kelas,
+            'pending_saya'          => $pending_saya,
             'jumlah_siswa'          => $jumlah_siswa,
             'siswa_kontribusi'      => $siswa_kontribusi,
             'pengeluaran_total'     => $pengeluaran_total,
