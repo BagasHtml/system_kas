@@ -6,6 +6,7 @@ require_once __DIR__ . '/traits/SecurityTrait.php';
 require_once __DIR__ . '/traits/FormatTrait.php';
 require_once __DIR__ . '/traits/FlashTrait.php';
 require_once __DIR__ . '/traits/TargetKasTrait.php';
+require_once __DIR__ . '/traits/BelanjaTrait.php';
 
 class Koneksi
 {
@@ -15,6 +16,8 @@ class Koneksi
     use FormatTrait;
     use FlashTrait;
     use TargetKasTrait;
+    use BelanjaTrait;
 }
 
 require_once __DIR__ . '/migrate_v2.php';
+require_once __DIR__ . '/migrate_belanja.php';

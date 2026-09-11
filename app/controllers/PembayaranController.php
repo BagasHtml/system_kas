@@ -26,7 +26,7 @@ class PembayaranController
         if (isset($_POST['hapus'])) {
             if (!Koneksi::csrfCheck()) {
                 Koneksi::setFlash('error', 'Token keamanan tidak valid. Muat ulang halaman lalu coba lagi.');
-                header("Location: pembayaran.php" . $back);
+                header("Location: pemasukan.php" . $back);
                 exit;
             }
             $id = (int)$_POST['hapus'];
@@ -34,7 +34,7 @@ class PembayaranController
                 $db::q("DELETE FROM pembayaran WHERE id = ?", [$id]);
                 Koneksi::setFlash('success', 'Data pembayaran berhasil dihapus.');
             }
-            header("Location: pembayaran.php" . $back);
+            header("Location: pemasukan.php" . $back);
             exit;
         }
 
@@ -42,7 +42,7 @@ class PembayaranController
         if (isset($_POST['simpan_target'])) {
             if (!Koneksi::csrfCheck()) {
                 Koneksi::setFlash('error', 'Token keamanan tidak valid. Muat ulang halaman lalu coba lagi.');
-                header("Location: pembayaran.php" . $back);
+                header("Location: pemasukan.php" . $back);
                 exit;
             }
             $t_periode = trim($_POST['t_periode'] ?? '');
@@ -52,7 +52,7 @@ class PembayaranController
 
             if (!$t_valid || $t_target <= 0) {
                 Koneksi::setFlash('error', 'Isi bulan dan nominal kas per siswa yang valid.');
-                header("Location: pembayaran.php" . $back);
+                header("Location: pemasukan.php" . $back);
                 exit;
             }
 
@@ -62,14 +62,14 @@ class PembayaranController
                 [$t_periode, $t_target, $t_keterangan !== '' ? $t_keterangan : null, $t_target, $t_keterangan !== '' ? $t_keterangan : null]
             );
             Koneksi::setFlash('success', 'Target kas per siswa ' . Koneksi::rupiah($t_target) . ' untuk ' . Koneksi::periodeLabel($t_periode) . ' disimpan.');
-            header("Location: pembayaran.php" . $back);
+            header("Location: pemasukan.php" . $back);
             exit;
         }
 
         if (isset($_POST['hapus_target'])) {
             if (!Koneksi::csrfCheck()) {
                 Koneksi::setFlash('error', 'Token keamanan tidak valid. Muat ulang halaman lalu coba lagi.');
-                header("Location: pembayaran.php" . $back);
+                header("Location: pemasukan.php" . $back);
                 exit;
             }
             $t_periode = trim($_POST['hapus_target'] ?? '');
@@ -77,7 +77,7 @@ class PembayaranController
                 $db::q("DELETE FROM target_kas WHERE periode = ?", [$t_periode]);
                 Koneksi::setFlash('success', 'Target ' . Koneksi::periodeLabel($t_periode) . ' dihapus.');
             }
-            header("Location: pembayaran.php" . $back);
+            header("Location: pemasukan.php" . $back);
             exit;
         }
 
@@ -85,7 +85,7 @@ class PembayaranController
         if (isset($_POST['setuju_verifikasi'])) {
             if (!Koneksi::csrfCheck()) {
                 Koneksi::setFlash('error', 'Token keamanan tidak valid.');
-                header("Location: pembayaran.php" . $back);
+                header("Location: pemasukan.php" . $back);
                 exit;
             }
             $id = (int)$_POST['setuju_verifikasi'];
@@ -93,14 +93,14 @@ class PembayaranController
                 $db::q("UPDATE pembayaran SET status = 'lunas', tanggal_bayar = NOW() WHERE id = ?", [$id]);
                 Koneksi::setFlash('success', 'Pembayaran berhasil diverifikasi & disetujui (Status: Lunas).');
             }
-            header("Location: pembayaran.php" . $back);
+            header("Location: pemasukan.php" . $back);
             exit;
         }
 
         if (isset($_POST['tolak_verifikasi'])) {
             if (!Koneksi::csrfCheck()) {
                 Koneksi::setFlash('error', 'Token keamanan tidak valid.');
-                header("Location: pembayaran.php" . $back);
+                header("Location: pemasukan.php" . $back);
                 exit;
             }
             $id = (int)$_POST['tolak_verifikasi'];
@@ -108,7 +108,7 @@ class PembayaranController
                 $db::q("UPDATE pembayaran SET status = 'belum' WHERE id = ?", [$id]);
                 Koneksi::setFlash('error', 'Konfirmasi pembayaran ditolak.');
             }
-            header("Location: pembayaran.php" . $back);
+            header("Location: pemasukan.php" . $back);
             exit;
         }
 
@@ -116,23 +116,22 @@ class PembayaranController
         if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             if (!Koneksi::csrfCheck()) {
                 Koneksi::setFlash('error', 'Token keamanan tidak valid. Muat ulang halaman lalu coba lagi.');
-                header("Location: pembayaran.php" . $back);
+                header("Location: pemasukan.php" . $back);
                 exit;
             }
             $id        = (int)($_POST['id'] ?? 0);
             $siswa_id  = (int)($_POST['siswa_id'] ?? 0);
-            $periode   = trim($_POST['periode'] ?? '');
             $jumlah    = (float)($_POST['jumlah'] ?? 0);
             $status    = in_array($_POST['status'] ?? '', ['lunas', 'pending', 'belum']) ? $_POST['status'] : 'belum';
             $metode    = in_array($_POST['metode'] ?? '', ['langsung', 'qris', 'dana'], true) ? $_POST['metode'] : 'langsung';
             $tanggal   = trim($_POST['tanggal_bayar'] ?? '');
             $tanggal   = $tanggal !== '' ? $tanggal : null;
 
-            $periode_valid = preg_match('/^(\d{4})-(\d{2})$/', $periode, $pm) && (int)$pm[2] >= 1 && (int)$pm[2] <= 12;
+            $periode = date('Y-m');
 
-            if ($siswa_id <= 0 || !$periode_valid || $jumlah <= 0) {
-                Koneksi::setFlash('error', 'Data tidak lengkap: pilih siswa, bulan, dan jumlah yang valid.');
-                header("Location: pembayaran.php" . $back);
+            if ($siswa_id <= 0 || $jumlah <= 0) {
+                Koneksi::setFlash('error', 'Data tidak lengkap: pilih siswa dan jumlah yang valid.');
+                header("Location: pemasukan.php" . $back);
                 exit;
             }
 
@@ -155,7 +154,7 @@ class PembayaranController
                 );
                 Koneksi::setFlash('success', 'Data pembayaran berhasil ditambahkan.');
             }
-            header("Location: pembayaran.php" . $back);
+            header("Location: pemasukan.php" . $back);
             exit;
         }
 

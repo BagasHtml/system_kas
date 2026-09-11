@@ -33,11 +33,17 @@ $username = $_SESSION['nama'] ?? $_SESSION['username'] ?? 'Bendahara';
         <a class="nav-link <?= $active == 'siswa' ? 'active' : '' ?>" href="siswa.php">
             <i class="bi bi-people-fill"></i> Data Siswa
         </a>
-        <a class="nav-link <?= $active == 'pembayaran' ? 'active' : '' ?>" href="pembayaran.php">
-            <i class="bi bi-wallet-fill"></i> Pembayaran
+        <a class="nav-link <?= $active == 'pemasukan' ? 'active' : '' ?>" href="pemasukan.php">
+            <i class="bi bi-wallet-fill"></i> Pemasukan
         </a>
         <a class="nav-link <?= $active == 'pengeluaran' ? 'active' : '' ?>" href="pengeluaran.php">
             <i class="bi bi-cart-dash-fill"></i> Pengeluaran
+        </a>
+        <a class="nav-link <?= $active == 'belanja' ? 'active' : '' ?>" href="belanja.php">
+            <i class="bi bi-bag-check-fill"></i> Target Belanja
+        </a>
+        <a class="nav-link <?= $active == 'pengaturan' ? 'active' : '' ?>" href="pengaturan.php">
+            <i class="bi bi-gear-fill"></i> Pengaturan
         </a>
         <a class="nav-link <?= $active == 'laporan' ? 'active' : '' ?>" href="laporan.php">
             <i class="bi bi-file-text"></i> Laporan
@@ -58,11 +64,14 @@ $username = $_SESSION['nama'] ?? $_SESSION['username'] ?? 'Bendahara';
     <a class="<?= $active == 'siswa' ? 'active' : '' ?>" href="siswa.php">
         <i class="bi bi-people-fill"></i> Siswa
     </a>
-    <a class="<?= $active == 'pembayaran' ? 'active' : '' ?>" href="pembayaran.php">
-        <i class="bi bi-wallet-fill"></i> Bayar
+    <a class="<?= $active == 'pemasukan' ? 'active' : '' ?>" href="pemasukan.php">
+        <i class="bi bi-wallet-fill"></i> Pemasukan
     </a>
     <a class="<?= $active == 'pengeluaran' ? 'active' : '' ?>" href="pengeluaran.php">
         <i class="bi bi-cart-dash-fill"></i> Keluar Kas
+    </a>
+    <a class="<?= $active == 'belanja' ? 'active' : '' ?>" href="belanja.php">
+        <i class="bi bi-bag-check-fill"></i> Belanja
     </a>
     <a class="<?= $active == 'laporan' ? 'active' : '' ?>" href="laporan.php">
         <i class="bi bi-file-text"></i> Laporan

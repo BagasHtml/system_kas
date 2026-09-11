@@ -22,10 +22,10 @@ include '../partials/header.php';
                 <i class="bi bi-shield-lock-fill"></i>
             </div>
             <h1>Kelola Kas Kelas</h1>
-            <p>Masuk ke dashboard bendahara untuk mengelola pembayaran, pengeluaran, dan laporan kas kelas secara transparan.</p>
+            <p>Masuk ke dashboard bendahara untuk mengelola pemasukan, pengeluaran, dan laporan kas kelas secara transparan.</p>
         </div>
         <ul class="auth-visual-list">
-            <li><i class="bi bi-check2-circle"></i> Kelola pembayaran kas siswa</li>
+            <li><i class="bi bi-check2-circle"></i> Kelola pemasukan kas siswa</li>
             <li><i class="bi bi-check2-circle"></i> Catat pengeluaran kas kelas</li>
             <li><i class="bi bi-check2-circle"></i> Cetak laporan keuangan</li>
         </ul>

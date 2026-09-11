@@ -25,6 +25,9 @@ if (session_status() === PHP_SESSION_NONE) session_start();
         <a class="nav-link <?= ($active ?? '') == 'pengeluaran' ? 'active' : '' ?>" href="pengeluaran.php">
             <i class="bi bi-cart-dash-fill"></i> Pengeluaran
         </a>
+        <a class="nav-link <?= ($active ?? '') == 'belanja' ? 'active' : '' ?>" href="belanja.php">
+            <i class="bi bi-bag-check-fill"></i> Target Belanja
+        </a>
 
         <?php if (!empty($_SESSION['is_bendahara'])): ?>
         <div class="nav-section">Admin</div>

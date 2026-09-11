@@ -142,11 +142,11 @@ class SiswaDashboardController
         $area_path = $smooth_path . " L {$pts[11][0]},{$baseline} L {$pts[0][0]},{$baseline} Z";
 
         /* Widget 2: Ringkasan Pengeluaran Kelas */
-        $exp_total = $db::q("SELECT COALESCE(SUM(jumlah), 0) t, COUNT(*) c FROM pengeluaran")->fetch_assoc();
+        $exp_total = $db::q("SELECT COALESCE(SUM(jumlah), 0) t, COUNT(*) c FROM pengeluaran WHERE target_belanja_id IS NULL")->fetch_assoc();
         $pengeluaran_total = (float)($exp_total['t'] ?? 0);
         $pengeluaran_count = (int)($exp_total['c'] ?? 0);
         $pengeluaran_terakhir = $db::q(
-            "SELECT keterangan, jumlah, tanggal FROM pengeluaran ORDER BY tanggal DESC, id DESC LIMIT 3"
+            "SELECT keterangan, jumlah, tanggal FROM pengeluaran WHERE target_belanja_id IS NULL ORDER BY tanggal DESC, id DESC LIMIT 3"
         )->fetch_all(MYSQLI_ASSOC);
 
         return [

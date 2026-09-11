@@ -122,7 +122,7 @@ $kpis = [
                                             <i class="bi bi-pencil"></i>
                                         </button>
                                         <form method="post" action="pengeluaran.php<?= $back ?>" style="display:inline;"
-                                              onsubmit="return confirmDelete(event, 'Yakin hapus pengeluaran ini?')">
+                                              onsubmit="return confirmDelete(event, 'Yakin hapus pengeluaran <?= htmlspecialchars($p['keterangan']) ?> sebesar <?= rupiah((float)$p['jumlah']) ?>?')">
                                             <?= Koneksi::csrfField() ?>
                                             <input type="hidden" name="hapus" value="<?= $p['id'] ?>">
                                             <button type="submit" class="dash-btn dash-btn-light" style="padding:6px 10px;color:var(--danger);">

@@ -2,8 +2,8 @@
 require_once __DIR__ . '/../../app/controllers/PembayaranController.php';
 extract(PembayaranController::handle(), EXTR_SKIP);
 
-$title = 'Pembayaran - Admin';
-$active = 'pembayaran';
+$title = 'Pemasukan - Admin';
+$active = 'pemasukan';
 
 include '../partials/header.php';
 include '../partials/admin_sidebar.php';
@@ -13,8 +13,8 @@ include '../partials/helpers.php';
 <div class="main-content dash-page">
     <div class="dash-topbar">
         <div>
-            <h1 class="dash-title">Pembayaran Kas</h1>
-            <p class="dash-subtitle">Catat dan kelola iuran kas bulanan siswa</p>
+            <h1 class="dash-title">Pemasukan Kas</h1>
+            <p class="dash-subtitle">Catat dan kelola iuran kas masuk dari siswa</p>
         </div>
         <div class="dash-topbar-actions">
             </form>
@@ -28,10 +28,10 @@ include '../partials/helpers.php';
             <div class="dash-card-head">
                 <div>
                     <div class="dash-card-title" style="display:flex;align-items:center;gap:8px;">
-                        <i class="bi bi-clock-history" style="color:#b45309;"></i> Konfirmasi Pembayaran Masuk
+                        <i class="bi bi-clock-history" style="color:#b45309;"></i> Konfirmasi Pemasukan Masuk
                         <span class="dash-status-pill warn" style="margin-left:4px;"><?= count($pending_list) ?> menunggu</span>
                     </div>
-                    <div class="dash-card-sub">Setujui agar pembayaran terhitung sebagai lunas dan progres target kas ikut bertambah</div>
+                    <div class="dash-card-sub">Setujui agar pemasukan terhitung sebagai lunas dan saldo kas ikut bertambah</div>
                 </div>
             </div>
             <div class="dash-table-wrap">
@@ -78,16 +78,16 @@ include '../partials/helpers.php';
                                 </td>
                                 <td style="text-align:center;">
                                     <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
-                                        <form method="post" action="pembayaran.php<?= $back ?>" style="display:inline;"
-                                              onsubmit="return confirmDelete(event, 'Setujui pembayaran <?= htmlspecialchars($pl['nama']) ?> bulan <?= htmlspecialchars(Koneksi::periodeLabel($pl['periode'])) ?>?')">
+                                        <form method="post" action="pemasukan.php<?= $back ?>" style="display:inline;"
+                                              onsubmit="return confirmDelete(event, 'Setujui pemasukan <?= htmlspecialchars($pl['nama']) ?> sebesar <?= rupiah((float)$pl['jumlah']) ?>?')">
                                             <?= Koneksi::csrfField() ?>
                                             <input type="hidden" name="setuju_verifikasi" value="<?= $pl['id'] ?>">
                                             <button type="submit" class="dash-btn dash-btn-primary dash-btn-sm">
                                                 <i class="bi bi-check2-circle"></i> Setujui
                                             </button>
                                         </form>
-                                        <form method="post" action="pembayaran.php<?= $back ?>" style="display:inline;"
-                                              onsubmit="return confirmDelete(event, 'Tolak konfirmasi pembayaran <?= htmlspecialchars($pl['nama']) ?>?')">
+                                        <form method="post" action="pemasukan.php<?= $back ?>" style="display:inline;"
+                                              onsubmit="return confirmDelete(event, 'Tolak pemasukan <?= htmlspecialchars($pl['nama']) ?> sebesar <?= rupiah((float)$pl['jumlah']) ?>?')">
                                             <?= Koneksi::csrfField() ?>
                                             <input type="hidden" name="tolak_verifikasi" value="<?= $pl['id'] ?>">
                                             <button type="submit" class="dash-btn dash-btn-danger dash-btn-sm">
@@ -274,7 +274,7 @@ include '../partials/helpers.php';
         <div class="dash-card-head">
             <div>
                 <div class="dash-card-title">Bulan: <?= $selected_periode_db !== '' ? htmlspecialchars(Koneksi::periodeLabel($selected_periode_db)) : 'Semua Bulan' ?></div>
-                <div class="dash-card-sub"><?= $total_data ?> catatan pembayaran</div>
+                <div class="dash-card-sub"><?= $total_data ?> catatan pemasukan</div>
             </div>
             <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
                 <button class="dash-btn dash-btn-primary" data-bs-toggle="modal" data-bs-target="#modalPembayaran">
@@ -311,8 +311,8 @@ include '../partials/helpers.php';
                         <tr>
                             <td colspan="8">
                                 <div class="dash-empty">
-                                    <div class="t"><?= $cari !== '' ? 'Tidak ada hasil untuk "' . htmlspecialchars($cari) . '"' : 'Belum ada data pembayaran' ?></div>
-                                    <div class="s"><?= $cari === '' ? 'Catat pembayaran siswa melalui tombol Tambah' : 'Coba kata kunci lain' ?></div>
+                                    <div class="t"><?= $cari !== '' ? 'Tidak ada hasil untuk "' . htmlspecialchars($cari) . '"' : 'Belum ada data pemasukan' ?></div>
+                                    <div class="s"><?= $cari === '' ? 'Catat pemasukan siswa melalui tombol Tambah' : 'Coba kata kunci lain' ?></div>
                                 </div>
                             </td>
                         </tr>
@@ -350,8 +350,8 @@ include '../partials/helpers.php';
                                                 data-tanggal="<?= $p['tanggal_bayar'] ?? '' ?>">
                                             <i class="bi bi-pencil"></i> Edit
                                         </button>
-                                        <form method="post" action="pembayaran.php<?= $back ?>" style="display:inline;"
-                                              onsubmit="return confirmDelete(event, 'Yakin hapus pembayaran <?= htmlspecialchars($p['nama']) ?> bulan <?= htmlspecialchars(Koneksi::periodeLabel($p['periode'])) ?>?')">
+                                        <form method="post" action="pemasukan.php<?= $back ?>" style="display:inline;"
+                                              onsubmit="return confirmDelete(event, 'Yakin hapus pemasukan <?= htmlspecialchars($p['nama']) ?> sebesar <?= rupiah((float)$p['jumlah']) ?>?')">
                                             <?= Koneksi::csrfField() ?>
                                             <input type="hidden" name="hapus" value="<?= $p['id'] ?>">
                                             <button type="submit" class="dash-btn dash-btn-danger dash-btn-sm">
@@ -384,7 +384,7 @@ include '../partials/helpers.php';
                 <?= Koneksi::csrfField() ?>
                 <input type="hidden" name="id" id="edit_id">
                 <div class="modal-header">
-                    <h6 class="modal-title" id="modalTitle">Tambah Pembayaran</h6>
+                    <h6 class="modal-title" id="modalTitle">Tambah Pemasukan</h6>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
@@ -404,7 +404,9 @@ include '../partials/helpers.php';
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Bulan</label>
-                        <input type="month" class="form-control" name="periode" id="periode" required>
+                        <input type="text" class="form-control" value="<?= htmlspecialchars(Koneksi::periodeLabel(date('Y-m'))) ?>" disabled>
+                        <input type="hidden" name="periode" value="<?= date('Y-m') ?>">
+                        <div class="form-text">Otomatis: bulan berjalan</div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Jumlah (Rp)</label>
@@ -560,19 +562,17 @@ document.getElementById('modalPembayaran')?.addEventListener('show.bs.modal', fu
     const btn = e.relatedTarget;
     const id = btn?.dataset.id;
     if (id) {
-        document.getElementById('modalTitle').textContent = 'Edit Pembayaran';
+        document.getElementById('modalTitle').textContent = 'Edit Pemasukan';
         document.getElementById('edit_id').value = id;
         document.getElementById('siswa_id').value = btn.dataset.siswa_id || '';
-        document.getElementById('periode').value = btn.dataset.periode || '';
         document.getElementById('jumlah').value = btn.dataset.jumlah || '';
         document.getElementById('status').value = btn.dataset.status || 'belum';
         document.getElementById('metode').value = btn.dataset.metode || 'langsung';
         document.getElementById('tanggal_bayar').value = btn.dataset.tanggal || '';
     } else {
-        document.getElementById('modalTitle').textContent = 'Tambah Pembayaran';
+        document.getElementById('modalTitle').textContent = 'Tambah Pemasukan';
         document.getElementById('edit_id').value = '';
         document.getElementById('siswa_id').value = '';
-        document.getElementById('periode').value = '';
         document.getElementById('jumlah').value = '';
         document.getElementById('status').value = 'belum';
         document.getElementById('metode').value = 'langsung';

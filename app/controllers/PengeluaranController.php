@@ -57,10 +57,10 @@ class PengeluaranController
 
             // Proyeksi saldo untuk notifikasi "saldo tidak mencukupi"
             $income_total = (float)$db::q("SELECT COALESCE(SUM(jumlah),0) t FROM pembayaran WHERE status='lunas'")->fetch_assoc()['t'];
-            $exp_total = (float)$db::q("SELECT COALESCE(SUM(jumlah),0) t FROM pengeluaran")->fetch_assoc()['t'];
+            $exp_total = (float)$db::q("SELECT COALESCE(SUM(jumlah),0) t FROM pengeluaran WHERE target_belanja_id IS NULL")->fetch_assoc()['t'];
             $old_jumlah = 0;
             if ($id > 0) {
-                $old_res = $db::q("SELECT jumlah FROM pengeluaran WHERE id = ?", [$id]);
+                $old_res = $db::q("SELECT jumlah FROM pengeluaran WHERE id = ? AND target_belanja_id IS NULL", [$id]);
                 if ($old_res) { $old_r = $old_res->fetch_assoc(); $old_jumlah = (float)($old_r['jumlah'] ?? 0); }
             }
             $projected_exp = $exp_total - $old_jumlah + $jumlah;
@@ -107,7 +107,7 @@ class PengeluaranController
         $masuk_agg = $db::q("SELECT COALESCE(SUM(jumlah), 0) AS total FROM pembayaran WHERE status = 'lunas'")->fetch_assoc();
         $total_pemasukan = (float)($masuk_agg['total'] ?? 0);
 
-        $exp_all = $db::q("SELECT COALESCE(SUM(jumlah), 0) AS total FROM pengeluaran")->fetch_assoc();
+        $exp_all = $db::q("SELECT COALESCE(SUM(jumlah), 0) AS total FROM pengeluaran WHERE target_belanja_id IS NULL")->fetch_assoc();
         $total_pengeluaran_all = (float)($exp_all['total'] ?? 0);
 
         $sisa_saldo_kas = $total_pemasukan - $total_pengeluaran_all;
@@ -116,7 +116,7 @@ class PengeluaranController
         $per_page = 10;
         $page = max(1, (int)($_GET['hal'] ?? 1));
 
-        $where_clauses = [];
+        $where_clauses = ["target_belanja_id IS NULL"];
         $params = [];
         if ($cari !== '') {
             $where_clauses[] = "(keterangan LIKE ? OR tanggal LIKE ?)";

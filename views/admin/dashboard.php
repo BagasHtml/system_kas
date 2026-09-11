@@ -17,7 +17,7 @@ $banner = [
 ];
 
 $kpis = [
-    ['label' => 'Total Pemasukan Kas', 'value' => rupiah($pemasukan), 'note' => 'dari ' . $lunas_count . ' pembayaran lunas', 'tone' => 'success'],
+    ['label' => 'Total Pemasukan Kas', 'value' => rupiah($pemasukan), 'note' => 'dari ' . $lunas_count . ' pemasukan lunas', 'tone' => 'success'],
     ['label' => 'Total Pengeluaran Kas', 'value' => rupiah($pengeluaran_total), 'note' => $pengeluaran_count . ' transaksi keluar', 'tone' => 'danger'],
     ['label' => 'Sisa Saldo Kas Kelas', 'value' => rupiah($saldo), 'note' => $saldo >= 0 ? 'Saldo kas aman' : 'Perlu evaluasi kas', 'tone' => 'accent'],
     ['label' => 'Total Siswa', 'value' => (string)$total_siswa, 'note' => 'rata-rata ' . rupiah($rata_rata) . '/siswa', 'tone' => 'info'],
@@ -46,11 +46,11 @@ $kpis = [
             <div style="display:flex;align-items:center;gap:12px;">
                 <i class="bi bi-bell-fill" style="font-size:22px;color:#b45309;"></i>
                 <div>
-                    <b style="color:#92400e;">Ada <?= $pending_count ?> pembayaran masuk dari siswa yang perlu verifikasi!</b>
+                    <b style="color:#92400e;">Ada <?= $pending_count ?> pemasukan masuk dari siswa yang perlu verifikasi!</b>
                     <div style="font-size:12px;color:#b45309;">Siswa telah mengirim bukti transfer dan menunggu persetujuan Anda.</div>
                 </div>
             </div>
-            <a href="pembayaran.php#verifikasi" class="dash-btn dash-btn-primary" style="background:#b45309;border-color:#b45309;padding:7px 16px;font-size:12px;white-space:nowrap;">
+            <a href="pemasukan.php#verifikasi" class="dash-btn dash-btn-primary" style="background:#b45309;border-color:#b45309;padding:7px 16px;font-size:12px;white-space:nowrap;">
                 <i class="bi bi-check2-square"></i> Ke Halaman Verifikasi
             </a>
         </div>
@@ -84,7 +84,7 @@ $kpis = [
 
             <?php if (!$chart_any): ?>
                 <div class="dash-chart-svg">
-                    <div class="dash-empty-note">Belum ada pembayaran tercatat</div>
+                    <div class="dash-empty-note">Belum ada pemasukan tercatat</div>
                 </div>
             <?php else: ?>
                 <div class="dash-chart-svg">
@@ -162,9 +162,39 @@ $kpis = [
                 </div>
             </div>
 
+            <?php if (!empty($belanja_items)): ?>
+            <div class="dash-card">
+                <div class="dash-card-head">
+                    <div>
+                        <div class="dash-card-title">Target Belanja Kelas</div>
+                        <div class="dash-card-sub"><?= $belanja_aktif ?> target aktif</div>
+                    </div>
+                    <a href="belanja.php" class="dash-btn dash-btn-light" style="font-size:12px;padding:5px 12px;">Lihat Semua</a>
+                </div>
+                <?php foreach (array_slice($belanja_items, 0, 3) as $bi): ?>
+                <div style="padding:10px 0;border-top:1px solid var(--border);">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                        <span style="font-weight:600;font-size:13px;"><?= htmlspecialchars($bi['nama_barang']) ?></span>
+                        <span class="dash-status-pill <?= $bi['status_cls'] ?>" style="font-size:10px;padding:2px 8px;"><?= $bi['status_text'] ?></span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:4px;">
+                        <span>Terkumpul <?= rupiah($bi['collected']) ?></span>
+                        <span style="font-weight:700;"><?= $bi['pct'] ?>%</span>
+                    </div>
+                    <div style="height:6px;border-radius:4px;background:#EEF0F3;overflow:hidden;">
+                        <div style="height:100%;border-radius:4px;background:linear-gradient(90deg,#00A37A,#00B98A);width:<?= $bi['pct'] ?>%;"></div>
+                    </div>
+                    <div style="font-size:10px;color:var(--text-muted);margin-top:3px;">
+                        <?= rupiah($bi['target']) ?> target &middot; Sisa <?= rupiah($bi['sisa']) ?>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
+
             <div class="dash-promo">
                 <h4>Butuh laporan lengkap?</h4>
-                <p>Rekap pembayaran per siswa dan saldo kas siap dicetak dalam satu klik.</p>
+                <p>Rekap pemasukan per siswa dan saldo kas siap dicetak dalam satu klik.</p>
                 <a href="laporan.php" class="dash-promo-btn">
                     Lihat Laporan <?= ic('<path d="M9 6l6 6-6 6"/>', 14) ?>
                 </a>
@@ -176,18 +206,18 @@ $kpis = [
         <div class="dash-card">
             <div class="dash-card-head">
                 <div>
-                    <div class="dash-card-title">Pembayaran Terakhir</div>
-                    <div class="dash-card-sub"><?= $lunas_count + $belum_count ?> total catatan pembayaran</div>
+                    <div class="dash-card-title">Pemasukan Terakhir</div>
+                    <div class="dash-card-sub"><?= $lunas_count + $belum_count ?> total catatan pemasukan</div>
                 </div>
-                <a href="pembayaran.php" class="dash-btn dash-btn-light">
+                <a href="pemasukan.php" class="dash-btn dash-btn-light">
                     Lihat semua
                 </a>
             </div>
 
             <?php if (empty($recent)): ?>
                 <div class="dash-empty">
-                    <div class="t">Belum ada pembayaran</div>
-                    <div class="s">Catat pembayaran siswa melalui menu Pembayaran</div>
+                    <div class="t">Belum ada pemasukan</div>
+                    <div class="s">Catat pemasukan siswa melalui menu Pemasukan</div>
                 </div>
             <?php else: ?>
                 <div class="dash-table-wrap">

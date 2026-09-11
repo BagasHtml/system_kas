@@ -54,7 +54,7 @@ $agg = $db::q(
 $pemasukan = (float)$agg['pemasukan'];
 $lunas_count = (int)$agg['lunas_count'];
 
-$pengeluaran_total = (float)$db::q("SELECT COALESCE(SUM(jumlah), 0) t FROM pengeluaran")->fetch_assoc()['t'];
+$pengeluaran_total = (float)$db::q("SELECT COALESCE(SUM(jumlah), 0) t FROM pengeluaran WHERE target_belanja_id IS NULL")->fetch_assoc()['t'];
 $saldo = $pemasukan - $pengeluaran_total;
 
 $bulan_id = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
@@ -80,7 +80,7 @@ foreach (rows($db::q(
 foreach (rows($db::q(
     "SELECT DATE_FORMAT(tanggal, '%Y-%m') ym, COALESCE(SUM(jumlah), 0) t
      FROM pengeluaran
-     WHERE tanggal >= ?
+     WHERE tanggal >= ? AND target_belanja_id IS NULL
      GROUP BY ym",
     [$start_6bln]
 )) as $r) {

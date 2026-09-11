@@ -7,7 +7,16 @@ $title = 'Dashboard - Siswa';
 include '../partials/header.php';
 include '../partials/helpers.php';
 
-$tunggakan_bulan = get_tunggakan_siswa($siswa_id);
+$dana_no  = Koneksi::pengaturan('nomor_dana', '0813-2175-0459');
+$dana_nm  = Koneksi::pengaturan('atas_nama_dana', '-');
+$qris_img = Koneksi::pengaturan('qris_path', 'assets/img/qris.png');
+$nama_kelas = Koneksi::pengaturan('nama_kelas', 'Kelas');
+$periode_now = date('Y-m');
+$per_siswa_now = 0;
+if (!empty($target_map)) {
+    $latest = end($target_map);
+    $per_siswa_now = (float)($latest['per_siswa'] ?? 0);
+}
 
 $banner = [
     ['icon' => 'bi bi-wallet2', 'label' => 'Total Kontribusi Kamu', 'value' => rupiah($lunas), 'note' => $periode_lunas . ' bulan kontribusi terkumpul'],
@@ -21,11 +30,8 @@ $banner = [
     <div class="dash-topbar">
         <div>
             <p class="student-eyebrow">Dashboard Siswa</p>
-            <h1 class="dash-title" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <h1 class="dash-title">
                 Hai, <?= $siswa_nama ?>
-                <?php if ($tunggakan_bulan > 0): ?>
-                <?php else: ?>
-                <?php endif; ?>
             </h1>
             <p class="dash-subtitle">Nomor absen <?= $siswa_absen ?> &middot; yuk pantau status kas kamu di sini</p>
         </div>
@@ -80,11 +86,11 @@ $banner = [
                     <div class="dash-pay-info">
                         <div class="dash-pay-row">
                             <span class="lbl">Nomor Dana</span>
-                            <span class="val num">0813-2175-0459</span>
+                            <span class="val num"><?= htmlspecialchars($dana_no) ?></span>
                         </div>
                         <div class="dash-pay-row">
                             <span class="lbl">Atas Nama</span>
-                            <span class="val">Bagas Tresna Nanda MS</span>
+                            <span class="val"><?= htmlspecialchars($dana_nm) ?></span>
                         </div>
                         <div class="dash-pay-row">
                             <span class="lbl">Bulan Kontribusi</span>
@@ -99,7 +105,7 @@ $banner = [
                         QRIS
                     </div>
                     <div class="dash-pay-qris">
-                        <img src="<?= BASE_URL ?>/assets/img/qris.png" alt="QRIS Kas Kelas">
+                        <img src="<?= BASE_URL ?>/<?= htmlspecialchars($qris_img) ?>" alt="QRIS Kas Kelas">
                     </div>
                     <div class="dash-pay-hint">Scan kode di atas setelah transfer</div>
                 </div>
@@ -107,8 +113,54 @@ $banner = [
 
             <div class="dash-pay-note">
                 <i class="bi bi-info-circle"></i>
-                Setelah transfer, konfirmasi &amp; status pembayaran kamu diproses dan diverifikasi oleh bendahara.
+                Setelah transfer, konfirmasi &amp; upload bukti transfer di bawah ini.
             </div>
+        </div>
+
+        <!-- Form Upload Bukti Transfer -->
+        <div class="dash-card" id="upload-bukti">
+            <div class="dash-card-head">
+                <div>
+                    <div class="dash-card-title">Kontribusi &amp; Upload Bukti</div>
+                    <div class="dash-card-sub">Upload bukti transfer untuk periode <?= htmlspecialchars(Koneksi::periodeLabel($periode_now)) ?></div>
+                </div>
+            </div>
+            <form action="<?= BASE_URL ?>/function/setor_bayar.php" method="POST" enctype="multipart/form-data" style="padding:0 20px 20px;">
+                <?= Koneksi::csrfField() ?>
+                <input type="hidden" name="periode" value="<?= $periode_now ?>">
+                <div style="display:flex;flex-direction:column;gap:14px;">
+                    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                        <div style="flex:1;min-width:200px;">
+                            <label style="display:block;font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em;">Jumlah (Rp)</label>
+                            <input type="number" class="form-control" name="jumlah"
+                                   min="1" step="1000"
+                                   placeholder="Masukkan jumlah, berapa saja"
+                                   required style="border-radius:10px;">
+                        </div>
+                        <div style="flex:1;min-width:200px;">
+                            <label style="display:block;font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em;">Metode</label>
+                            <select class="form-select" name="metode" style="border-radius:10px;">
+                                <option value="dana">Send Dana</option>
+                                <option value="qris">QRIS</option>
+                                <option value="langsung">Langsung (Cash)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label style="display:block;font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em;">Bukti Transfer (Foto)</label>
+                        <input type="file" class="form-control" name="bukti_transfer" accept="image/*"
+                               style="border-radius:10px;" required>
+                        <div style="font-size:11px;color:var(--text-muted);margin-top:3px;">Format: JPG, PNG, WebP. Maks 5MB.</div>
+                    </div>
+                    <div>
+                        <label style="display:block;font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em;">Catatan (Opsional)</label>
+                        <input type="text" class="form-control" name="catatan" placeholder="Contoh: Transfer via BCA" style="border-radius:10px;">
+                    </div>
+                    <button type="submit" name="kontribusi_submit" class="dash-btn dash-btn-primary" style="width:100%;justify-content:center;padding:12px;">
+                        <i class="bi bi-cloud-arrow-up"></i> Kirim Kontribusi &amp; Upload Bukti
+                    </button>
+                </div>
+            </form>
         </div>
 
         <div class="dash-right-col">
@@ -229,6 +281,7 @@ $banner = [
                                     <th>Tanggal</th>
                                     <th>Status</th>
                                     <th>Metode</th>
+                                    <th>Catatan</th>
                                     <th style="text-align:center;">Bukti</th>
                                 </tr>
                         </thead>
@@ -239,9 +292,10 @@ $banner = [
                                     <td style="color:var(--text-muted);"><?= $no++ ?></td>
                                     <td><span style="font-weight:600;"><?= htmlspecialchars(Koneksi::periodeLabel($p['periode'])) ?></span></td>
                                     <td><span class="dash-amount"><?= rupiah((float)$p['jumlah']) ?></span></td>
-                                    <td><?= $p['tanggal_bayar'] ? date('d/m/Y', strtotime($p['tanggal_bayar'])) : '-' ?></td>
+                                    <td><?= $p['tanggal_bayar'] ? date('d/m/Y', strtotime($p['tanggal_bayar'])) : '<span style="font-size:11px;color:var(--warning);">Menunggu verifikasi</span>' ?></td>
                                     <td><?= status_pill($p['status']) ?></td>
                                     <td><?= metode_pill($p['metode'] ?? null) ?></td>
+                                    <td style="font-size:12px;color:var(--text-secondary);"><?= $p['catatan'] ? htmlspecialchars($p['catatan']) : '-' ?></td>
                                     <td style="text-align:center;">
                                         <?php if (!empty($p['bukti_transfer'])): ?>
                                             <button class="dash-btn dash-btn-light" style="padding:4px 8px;font-size:12px;"

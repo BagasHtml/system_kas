@@ -31,7 +31,7 @@ class AdminDashboardController
         $lunas_count = (int)$agg['lunas_count'];
         $belum_count = (int)$agg['belum_count'];
 
-        $keluar = $db::q("SELECT COALESCE(SUM(jumlah), 0) t, COUNT(*) c FROM pengeluaran")->fetch_assoc();
+        $keluar = $db::q("SELECT COALESCE(SUM(jumlah), 0) t, COUNT(*) c FROM pengeluaran WHERE target_belanja_id IS NULL")->fetch_assoc();
         $pengeluaran_total = (float)$keluar['t'];
         $pengeluaran_count = (int)$keluar['c'];
 
@@ -107,6 +107,19 @@ class AdminDashboardController
         $baseline = $CH - $CPB;
         $area_path = $smooth_path . " L {$pts[11][0]},{$baseline} L {$pts[0][0]},{$baseline} Z";
 
+        // Target belanja stats
+        $belanja_items = Koneksi::targetBelanjaList();
+        $belanja_aktif = 0;
+        $belanja_terkumpul = 0.0;
+        $belanja_target_total = 0.0;
+        foreach ($belanja_items as $bi) {
+            if ($bi['status'] !== 'terbeli') {
+                $belanja_aktif++;
+                $belanja_terkumpul += $bi['collected'];
+                $belanja_target_total += $bi['target'];
+            }
+        }
+
         return [
             'total_siswa'         => $total_siswa,
             'pending_count'       => $pending_count,
@@ -146,6 +159,10 @@ class AdminDashboardController
             'smooth_path'         => $smooth_path,
             'area_path'           => $area_path,
             'baseline'            => $baseline,
+            'belanja_items'       => $belanja_items,
+            'belanja_aktif'       => $belanja_aktif,
+            'belanja_terkumpul'   => $belanja_terkumpul,
+            'belanja_target_total'=> $belanja_target_total,
         ];
     }
 }

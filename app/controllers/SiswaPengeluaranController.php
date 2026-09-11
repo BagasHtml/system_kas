@@ -19,13 +19,13 @@ class SiswaPengeluaranController
         $masuk = $db::q("SELECT COALESCE(SUM(jumlah), 0) AS t FROM pembayaran WHERE status = 'lunas'")->fetch_assoc();
         $pemasukan = (float)($masuk['t'] ?? 0);
 
-        $exp_all = $db::q("SELECT COALESCE(SUM(jumlah), 0) AS total, COUNT(*) AS jml FROM pengeluaran")->fetch_assoc();
+        $exp_all = $db::q("SELECT COALESCE(SUM(jumlah), 0) AS total, COUNT(*) AS jml FROM pengeluaran WHERE target_belanja_id IS NULL")->fetch_assoc();
         $total_pengeluaran_all = (float)($exp_all['total'] ?? 0);
         $total_transaksi_all   = (int)($exp_all['jml'] ?? 0);
 
         $saldo = $pemasukan - $total_pengeluaran_all;
 
-        $where_clauses = [];
+        $where_clauses = ["target_belanja_id IS NULL"];
         $params = [];
         if ($cari !== '') {
             $where_clauses[] = "(keterangan LIKE ? OR tanggal LIKE ?)";
