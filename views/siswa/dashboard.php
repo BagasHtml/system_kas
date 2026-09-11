@@ -24,18 +24,20 @@ $banner = [
             <h1 class="dash-title" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
                 Hai, <?= $siswa_nama ?>
                 <?php if ($tunggakan_bulan > 0): ?>
-                    <span class="badge bg-danger" style="font-size:12px;font-weight:600;padding:5px 10px;border-radius:20px;">
-                        <i class="bi bi-hourglass-split"></i> <?= $tunggakan_bulan ?> Bulan Belum Lengkap
-                    </span>
                 <?php else: ?>
-                    <span class="badge bg-success" style="font-size:12px;font-weight:600;padding:5px 10px;border-radius:20px;">
-                        <i class="bi bi-check-circle-fill"></i> Kas Lengkap
-                    </span>
                 <?php endif; ?>
             </h1>
             <p class="dash-subtitle">Nomor absen <?= $siswa_absen ?> &middot; yuk pantau status kas kamu di sini</p>
         </div>
         <div class="dash-topbar-actions">
+            <span class="dash-datechip">
+                <?= ic('<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>', 14) ?>
+                <?= date('d M Y') ?>
+            </span>
+            <div class="dash-user">
+                <span class="dash-username"><?= htmlspecialchars($siswa_nama) ?></span>
+                <div class="dash-avatar"><?= strtoupper(mb_substr(trim($siswa_nama), 0, 1)) ?></div>
+            </div>
         </div>
     </div>
 
@@ -59,9 +61,14 @@ $banner = [
             <div class="dash-card-head">
                 <div>
                     <div class="dash-card-title">Kirim Kontribusi Kas</div>
-                    <div class="dash-card-sub">Kirim kontribusi kas kelas lewat Send Dana atau scan QRIS</div>
+                    <div class="dash-card-sub">Salurkan uang kas kelas lewat Send Dana atau scan QRIS</div>
                 </div>
-                <span class="dash-year-label"><?= htmlspecialchars(Koneksi::periodeLabel(date('Y-m'))) ?></span>
+                <div class="dash-year-label" style="display:flex;flex-direction:column;gap:2px;align-items:flex-end;">
+                    <?= htmlspecialchars(Koneksi::periodeLabel(date('Y-m'))) ?>
+                    <?php if ($ada_target && !empty($target_map)): ?>
+                        <small style="font-size:11px;color:var(--accent);font-weight:700;"><?= rupiah((float)end($target_map)['per_siswa']) ?>/siswa</small>
+                    <?php endif; ?>
+                </div>
             </div>
 
             <div class="dash-pay">
@@ -98,59 +105,13 @@ $banner = [
                 </div>
             </div>
 
-            <div class="dash-pay-confirm" style="margin-top:20px;padding-top:20px;border-top:1px dashed var(--border);">
-                <div style="font-weight:700;font-size:15px;margin-bottom:6px;display:flex;align-items:center;gap:6px;">
-                    <i class="bi bi-upload" style="color:var(--accent);"></i> Konfirmasi &amp; Upload Bukti
-                </div>
-                <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;">
-                    Sudah transfer via DANA atau QRIS? Upload foto bukti transfer di bawah agar bendahara dapat memverifikasi.
-                </p>
-                <form action="dashboard.php" method="POST" enctype="multipart/form-data" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                    <?= Koneksi::csrfField() ?>
-                    <input type="hidden" name="upload_bukti" value="1">
-                    <div>
-                        <label class="form-label" style="font-size:12px;font-weight:600;">Bulan kontribusi</label>
-                        <select name="periode" class="form-select form-select-sm" required style="border-radius:8px;">
-                            <?php if (empty($target_map)): ?>
-                                <option value="<?= date('Y-m') ?>"><?= Koneksi::periodeLabel(date('Y-m')) ?></option>
-                            <?php else: ?>
-                                <?php foreach ($target_map as $p => $info): ?>
-                                    <option value="<?= $p ?>" <?= $p === date('Y-m') ? 'selected' : '' ?>>
-                                        <?= Koneksi::periodeLabel($p) ?> (<?= rupiah(Koneksi::totalTargetPeriod((float)$info['per_siswa'])) ?>)
-                                    </option>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="form-label" style="font-size:12px;font-weight:600;">Jumlah yang ditransfer (Rp)</label>
-                        <input type="number" name="jumlah" class="form-control form-control-sm" placeholder="20000" min="1000" required style="border-radius:8px;">
-                    </div>
-                    <div>
-                        <label class="form-label" style="font-size:12px;font-weight:600;">Metode Pembayaran</label>
-                        <select name="metode" class="form-select form-select-sm" required style="border-radius:8px;">
-                            <option value="dana">Send DANA</option>
-                            <option value="qris">QRIS</option>
-                            <option value="langsung">Langsung / Tunai ke Bendahara</option>
-                        </select>
-                    </div>
-                    <div style="grid-column: 1 / -1;">
-                        <label class="form-label" style="font-size:12px;font-weight:600;">Upload Foto Bukti Transfer (JPG/PNG/WEBP)</label>
-                        <input type="file" name="bukti_transfer" class="form-control form-control-sm" accept="image/*" required style="border-radius:8px;">
-                    </div>
-                    <div style="grid-column: 1 / -1;">
-                        <label class="form-label" style="font-size:12px;font-weight:600;">Catatan / Nama Rekening Pengirim (Opsional)</label>
-                        <input type="text" name="catatan" class="form-control form-control-sm" placeholder="Contoh: Transfer dari DANA a.n Ahmad" style="border-radius:8px;">
-                    </div>
-                    <div style="grid-column: 1 / -1;margin-top:4px;">
-                        <button type="submit" class="dash-btn dash-btn-primary" style="width:100%;justify-content:center;">
-                            <i class="bi bi-send-check"></i> Kirim Konfirmasi Kas
-                        </button>
-                    </div>
-                </form>
+            <div class="dash-pay-note">
+                <i class="bi bi-info-circle"></i>
+                Setelah transfer, konfirmasi &amp; status pembayaran kamu diproses dan diverifikasi oleh bendahara.
             </div>
         </div>
 
+        <div class="dash-right-col">
         <div class="dash-card dash-target-card">
             <div class="dash-card-head">
                 <div>
@@ -207,6 +168,36 @@ $banner = [
                     </div>
                 <?php endif; ?>
             <?php endif; ?>
+        </div>
+
+        <div class="dash-card dash-target-chart">
+            <div class="dash-card-head">
+                <div>
+                    <div class="dash-card-title">Progres Target per Bulan</div>
+                    <div class="dash-card-sub">Realisasi pemasukan kas kelas tiap periode</div>
+                </div>
+            </div>
+
+            <?php if (empty($target_progress)): ?>
+                <div class="dash-empty" style="flex:1;">
+                    <div class="t">Belum ada data target</div>
+                    <div class="s">Bendahara belum menetapkan target kas</div>
+                </div>
+            <?php else: ?>
+                <div class="dash-bars-box">
+                    <?php foreach ($target_progress as $tp): ?>
+                        <?php $tp_pct = $tp['pct'] ?? 0; ?>
+                        <div class="dash-box-col">
+                            <span class="dash-box-pct"><?= $tp_pct ?>%</span>
+                            <div class="dash-box-bar <?= $tp_pct > 0 ? '' : 'empty' ?>" style="height:<?= max(6, min(150, round(($tp['target'] > 0 ? $tp['collected'] / $tp['target'] : 0) * 150))) ?>px;">
+                                <span class="tip"><?= rupiah($tp['collected']) ?> / <?= rupiah($tp['target']) ?></span>
+                            </div>
+                            <span class="dash-box-label"><?= htmlspecialchars($tp['label']) ?></span>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </div>
         </div>
     </div>
 

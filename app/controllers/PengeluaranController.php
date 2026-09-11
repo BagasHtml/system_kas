@@ -55,6 +55,23 @@ class PengeluaranController
                 exit;
             }
 
+            // Proyeksi saldo untuk notifikasi "saldo tidak mencukupi"
+            $income_total = (float)$db::q("SELECT COALESCE(SUM(jumlah),0) t FROM pembayaran WHERE status='lunas'")->fetch_assoc()['t'];
+            $exp_total = (float)$db::q("SELECT COALESCE(SUM(jumlah),0) t FROM pengeluaran")->fetch_assoc()['t'];
+            $old_jumlah = 0;
+            if ($id > 0) {
+                $old_res = $db::q("SELECT jumlah FROM pengeluaran WHERE id = ?", [$id]);
+                if ($old_res) { $old_r = $old_res->fetch_assoc(); $old_jumlah = (float)($old_r['jumlah'] ?? 0); }
+            }
+            $projected_exp = $exp_total - $old_jumlah + $jumlah;
+            $bal_insufficient = $income_total < $projected_exp;
+
+            if ($bal_insufficient) {
+                Koneksi::setFlash('error', 'Saldo tidak mencukupi: pengeluaran ' . number_format($jumlah, 0, ',', '.') . ' melebihi saldo kas yang tersedia. Transaksi dibatalkan.');
+                header("Location: pengeluaran.php" . $back);
+                exit;
+            }
+
             // Handle Upload Bukti Nota
             $nota_path = null;
             if (isset($_FILES['bukti_nota']) && $_FILES['bukti_nota']['error'] === UPLOAD_ERR_OK) {

@@ -390,14 +390,17 @@ include '../partials/helpers.php';
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label">Siswa</label>
-                        <select class="form-select" name="siswa_id" id="siswa_id" required>
-                            <option value="">-- Pilih Siswa --</option>
-                            <?php foreach ($daftar_siswa as $s): ?>
-                                <option value="<?= $s['id'] ?>">
-                                    <?= htmlspecialchars($s['nama']) ?> (Absen <?= (int)$s['nomor_absen'] ?>)
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
+                        <div class="pretty-select">
+                            <select class="form-select" name="siswa_id" id="siswa_id" required>
+                                <option value="">-- Pilih Siswa --</option>
+                                <?php foreach ($daftar_siswa as $s): ?>
+                                    <option value="<?= $s['id'] ?>">
+                                        <?= htmlspecialchars($s['nama']) ?> (Absen <?= (int)$s['nomor_absen'] ?>)
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <span class="pretty-select-icon"><i class="bi bi-chevron-down"></i></span>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Bulan</label>
@@ -451,6 +454,52 @@ include '../partials/helpers.php';
         </div>
     </div>
 </div>
+
+<style>
+.pretty-select {
+    position: relative;
+}
+.pretty-select .form-select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    width: 100%;
+    padding: 0.7rem 2.75rem 0.7rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #1A1D1E;
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: border-color .2s ease, box-shadow .2s ease;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+.pretty-select .form-select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-soft);
+    outline: none;
+}
+.pretty-select .form-select:hover {
+    border-color: var(--accent);
+}
+.pretty-select .form-select option {
+    color: #1A1D1E;
+    background: #fff;
+    font-weight: 500;
+}
+.pretty-select-icon {
+    position: absolute;
+    top: 50%;
+    right: 0.9rem;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: var(--accent);
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+}
+</style>
 
 <script>
 function toggleTanggal() {

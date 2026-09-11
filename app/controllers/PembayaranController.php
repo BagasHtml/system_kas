@@ -2,10 +2,6 @@
 
 require_once __DIR__ . '/AuthController.php';
 
-/**
- * Tanggung jawab: proses tambah/edit/hapus pembayaran + target kas bulanan
- * serta data daftar pembayaran + ringkasan target (hero) admin.
- */
 class PembayaranController
 {
     public static function handle(): array
@@ -153,12 +149,6 @@ class PembayaranController
                 );
                 Koneksi::setFlash('success', 'Data pembayaran berhasil diperbarui.');
             } else {
-                $dup = $db::q("SELECT id FROM pembayaran WHERE siswa_id = ? AND periode = ? LIMIT 1", [$siswa_id, $periode_db]);
-                if ($dup && $dup->num_rows > 0) {
-                    Koneksi::setFlash('error', 'Siswa tersebut sudah tercatat pada bulan ' . Koneksi::periodeLabel($periode_db) . '.');
-                    header("Location: pembayaran.php" . $back);
-                    exit;
-                }
                 $db::q(
                     "INSERT INTO pembayaran (siswa_id, periode, jumlah, status, metode, tanggal_bayar) VALUES (?, ?, ?, ?, ?, ?)",
                     [$siswa_id, $periode_db, $jumlah, $status, $metode, $tanggal]
@@ -190,7 +180,7 @@ class PembayaranController
         if ($conditions) {
             $sql .= " WHERE " . implode(" AND ", $conditions);
         }
-        $sql .= " ORDER BY p.periode DESC, s.nomor_absen ASC";
+        $sql .= " ORDER BY p.id DESC";
 
         $jml = $db::q(
             "SELECT COUNT(*) AS jml FROM pembayaran p INNER JOIN siswa s ON s.id = p.siswa_id" . ($conditions ? " WHERE " . implode(" AND ", $conditions) : ''),

@@ -119,7 +119,7 @@ $kpis = [
             <div class="dash-card">
                 <div class="dash-card-head">
                     <div>
-                        <div class="dash-card-title">Status Pembayaran</div>
+                        <div class="dash-card-title">Status Setoran</div>
                         <div class="dash-card-sub"><?= $ada_target && $kas_per_siswa !== null ? 'Target kelas = ' . rupiah($kas_per_siswa) . ' per siswa' : 'Perbandingan nominal kas' ?></div>
                     </div>
                     <?php if (!$ada_target): ?>

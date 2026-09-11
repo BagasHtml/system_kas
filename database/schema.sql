@@ -28,7 +28,7 @@ CREATE TABLE pembayaran (
     tanggal_bayar DATE NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (siswa_id) REFERENCES siswa(id) ON DELETE CASCADE,
-    UNIQUE KEY unique_payment (siswa_id, periode)
+    INDEX idx_siswa_id (siswa_id)
 );
 
 CREATE TABLE pengeluaran (

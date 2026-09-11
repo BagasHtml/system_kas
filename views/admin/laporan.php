@@ -1,5 +1,10 @@
 <?php
 require_once __DIR__ . '/../../app/controllers/LaporanController.php';
+
+if (isset($_GET['export'])) {
+    LaporanController::export();
+}
+
 extract(LaporanController::handle(), EXTR_SKIP);
 
 $title = 'Laporan Pengeluaran';
@@ -14,23 +19,26 @@ $sampai_label = $sampai ? date('d M Y', strtotime($sampai)) : '';
 ?>
 
 <div class="main-content dash-page">
-    <!-- Header khusus saat cetak -->
-    <div class="lap-print-header">
-        <h1>Laporan Pengeluaran Kas Kelas</h1>
-        <p>Periode: <?= htmlspecialchars($dari_label) ?> - <?= htmlspecialchars($sampai_label) ?></p>
-        <p>Dicetak: <?= date('d M Y') ?></p>
-    </div>
-
     <div class="dash-topbar">
         <div>
             <h1 class="dash-title">Laporan Pengeluaran Kas</h1>
             <p class="dash-subtitle">Periode <?= htmlspecialchars($dari_label) ?> - <?= htmlspecialchars($sampai_label) ?></p>
         </div>
         <div class="dash-topbar-actions">
-            <button class="dash-btn dash-btn-primary" onclick="window.print()">
-                <?= ic('<path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/>', 15) ?> Cetak
+            <button type="button" class="dash-btn dash-btn-light" onclick="window.print()">
+                <?= ic('<path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/>', 15) ?> Print
             </button>
+            <a class="dash-btn dash-btn-primary" href="laporan.php?export=1&dari=<?= urlencode($dari) ?>&sampai=<?= urlencode($sampai) ?>">
+                <?= ic('<path d="M12 3v12"/><path d="m8 11 4 4 4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>', 15) ?> Export CSV
+            </a>
         </div>
+    </div>
+
+    <div class="lap-print-header">
+        <h1>Laporan Pengeluaran Kas</h1>
+        <p>Periode: <?= htmlspecialchars($dari_label ?: 'Awal') ?> - <?= htmlspecialchars($sampai_label ?: 'Terakhir') ?></p>
+        <p>Total Pengeluaran: <?= rupiah($pengeluaran_total) ?></p>
+        <p>Dicetak pada: <?= date('d M Y H:i') ?></p>
     </div>
 
     <div class="lap-filterbar">

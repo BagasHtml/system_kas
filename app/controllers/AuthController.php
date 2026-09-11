@@ -44,11 +44,37 @@ class AuthController
     }
 
     /**
-     * Guard halaman dashboard admin. Hanya siswa ber-role bendahara.
+     * Guard halaman dashboard bendahara.
+     *
+     * Peran ini bersifat dua lapis:
+     *  1. User harus sudah login sebagai siswa (sesi `siswa_id` ada).
+     *  2. User harus sudah melewati login bendahara (username + password,
+     *     ditandai dengan flag `is_admin` di sesi).
+     *
+     * Bila lapis pertama gagal, arahkan ke halaman utama. Bila hanya belum
+     * login bendahara, arahkan ke form login bendahara.
      */
     public static function requireAdmin(): void
     {
-        self::requireRole([self::ROLE_BENDAHARA], 'index.php');
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        if (empty($_SESSION['siswa_id'])) {
+            header("Location: ../../index.php");
+            exit;
+        }
+        if (empty($_SESSION['is_admin'])) {
+            header("Location: login.php");
+            exit;
+        }
+    }
+
+    /**
+     * Cek apakah sesi telah login sebagai bendahara (username + password).
+     */
+    public static function isAdmin(): bool
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        return !empty($_SESSION['is_admin']);
     }
 
     /**
@@ -58,6 +84,58 @@ class AuthController
     {
         if (session_status() === PHP_SESSION_NONE) session_start();
         return ($_SESSION['role'] ?? null) === $role;
+    }
+
+    /**
+     * Proses login bendahara (dipanggil dari function/login.php).
+     * Memvalidasi username + password terhadap tabel `admin`.
+     * Dipisah dari login siswa (nama + absen) karena dasbor bendahara
+     * memerlukan otentikasi tersendiri.
+     */
+    public static function adminLogin(): void
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        /* Harus berasal dari sesi siswa yang aktif. */
+        if (empty($_SESSION['siswa_id'])) {
+            header("Location: ../../index.php");
+            exit;
+        }
+
+        if (isset($_POST['username'])) {
+            if (!Koneksi::csrfCheck()) {
+                $_SESSION['error'] = "Sesi tidak valid. Silakan coba lagi.";
+                header("Location: ../admin/login.php");
+                exit;
+            }
+
+            $username = trim($_POST['username']);
+            $password = (string)($_POST['password'] ?? '');
+
+            $result = Koneksi::q(
+                "SELECT id, username, password FROM admin WHERE username = ? AND is_active = 1",
+                [$username]
+            );
+            $admin = $result ? $result->fetch_assoc() : null;
+
+            if ($admin && password_verify($password, $admin['password'])) {
+                session_regenerate_id(true);
+                $_SESSION['is_admin']    = true;
+                $_SESSION['admin_id']    = (int)$admin['id'];
+                $_SESSION['username']    = $admin['username'];
+                if (empty($_SESSION['nama'])) {
+                    $_SESSION['nama'] = $admin['username'];
+                }
+                Koneksi::q("UPDATE admin SET last_login = NOW() WHERE id = ?", [(int)$admin['id']]);
+
+                header("Location: ../views/admin/dashboard.php");
+                exit;
+            }
+
+            $_SESSION['error'] = "Username atau password bendahara salah.";
+            header("Location: ../admin/login.php");
+            exit;
+        }
     }
 
     /**

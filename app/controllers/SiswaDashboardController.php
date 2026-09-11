@@ -18,62 +18,6 @@ class SiswaDashboardController
         $siswa_nama  = htmlspecialchars($_SESSION['nama'] ?? 'Siswa');
         $siswa_absen = htmlspecialchars($_SESSION['siswa_absen'] ?? '-');
 
-        /* ===== HANDLE UPLOAD BUKTI TRANSFER ===== */
-        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['upload_bukti'])) {
-            if (!Koneksi::csrfCheck()) {
-                Koneksi::setFlash('error', 'Token tidak valid. Silakan coba lagi.');
-                header("Location: dashboard.php#bayar");
-                exit;
-            }
-
-            $periode = trim($_POST['periode'] ?? '');
-            $jumlah  = (float)($_POST['jumlah'] ?? 0);
-            $catatan = trim($_POST['catatan'] ?? '');
-            $metode  = in_array($_POST['metode'] ?? '', ['langsung', 'qris', 'dana'], true) ? $_POST['metode'] : 'dana';
-
-            if (!preg_match('/^\d{4}-\d{2}$/', $periode) || $jumlah <= 0) {
-                Koneksi::setFlash('error', 'Pilih bulan dan jumlah pembayaran yang valid.');
-                header("Location: dashboard.php#bayar");
-                exit;
-            }
-
-            $bukti_path = null;
-            if (isset($_FILES['bukti_transfer']) && $_FILES['bukti_transfer']['error'] === UPLOAD_ERR_OK) {
-                $ext = strtolower(pathinfo($_FILES['bukti_transfer']['name'], PATHINFO_EXTENSION));
-                $allowed = ['jpg', 'jpeg', 'png', 'webp'];
-                if (in_array($ext, $allowed)) {
-                    $filename = 'bukti_' . time() . '_' . rand(100, 999) . '.' . $ext;
-                    $targetDir = str_replace('\\', '/', dirname(__DIR__, 2)) . '/assets/uploads/bukti_transfer/';
-                    if (!is_dir($targetDir)) @mkdir($targetDir, 0777, true);
-                    $targetFile = $targetDir . $filename;
-                    if (move_uploaded_file($_FILES['bukti_transfer']['tmp_name'], $targetFile)) {
-                        $bukti_path = 'assets/uploads/bukti_transfer/' . $filename;
-                    }
-                } else {
-                    Koneksi::setFlash('error', 'Format gambar harus JPG, PNG, atau WEBP.');
-                    header("Location: dashboard.php#bayar");
-                    exit;
-                }
-            }
-
-            if (!$bukti_path) {
-                Koneksi::setFlash('error', 'File bukti transfer wajib diupload.');
-                header("Location: dashboard.php#bayar");
-                exit;
-            }
-
-            $db::q(
-                "INSERT INTO pembayaran (siswa_id, periode, jumlah, status, metode, tanggal_bayar, bukti_transfer, catatan)
-                 VALUES (?, ?, ?, 'pending', ?, NOW(), ?, ?)
-                 ON DUPLICATE KEY UPDATE jumlah = ?, status = 'pending', metode = ?, tanggal_bayar = NOW(), bukti_transfer = ?, catatan = ?",
-                [$siswa_id, $periode, $jumlah, $metode, $bukti_path, $catatan, $jumlah, $metode, $bukti_path, $catatan]
-            );
-
-            Koneksi::setFlash('success', 'Konfirmasi pembayaran berhasil dikirim! Menunggu verifikasi dari bendahara.');
-            header("Location: dashboard.php#riwayat");
-            exit;
-        }
-
         $pembayaran = [];
         if ($siswa_id > 0) {
             $pembayaran = $db::q(
@@ -114,6 +58,37 @@ class SiswaDashboardController
             $kelas_remainder = max(0, $total_target - $kelas_collected);
         }
         $pct_kelas = $ada_target ? min(100, round($kelas_collected / $total_target * 100)) : 0;
+
+        /* Progres target per periode (untuk grafik kotak di dashboard siswa). */
+        $target_progress = [];
+        $jml_t = max(1, (int)Koneksi::jumlahSiswa());
+        if ($ada_target) {
+            $collected_per = [];
+            $r_c = $db::q(
+                "SELECT periode, COALESCE(SUM(jumlah), 0) t FROM pembayaran
+                 WHERE status = 'lunas' AND periode IN (" . implode(',', array_fill(0, count(array_keys($target_map)), '?')) . ")
+                 GROUP BY periode",
+                array_keys($target_map)
+            );
+            if ($r_c) {
+                while ($row = $r_c->fetch_assoc()) {
+                    $collected_per[$row['periode']] = (float)$row['t'];
+                }
+            }
+            foreach ($target_map as $ym => $t) {
+                $p_target = (float)$t['per_siswa'] * $jml_t;
+                if ($p_target <= 0) continue;
+                $p_collected = (float)($collected_per[$ym] ?? 0);
+                $target_progress[] = [
+                    'ym'     => $ym,
+                    'label'  => Koneksi::periodeLabel($ym),
+                    'target' => $p_target,
+                    'collected' => $p_collected,
+                    'pct'    => (int)min(100, round($p_collected / $p_target * 100)),
+                ];
+            }
+            usort($target_progress, fn($a, $b) => strcmp($a['ym'], $b['ym']));
+        }
 
         $pending_saya = (int)($db::q(
             "SELECT COUNT(*) c FROM pembayaran WHERE siswa_id = ? AND status = 'pending'",
@@ -215,6 +190,7 @@ class SiswaDashboardController
             'smooth_path'           => $smooth_path,
             'area_path'             => $area_path,
             'baseline'              => $baseline,
+            'target_progress'       => $target_progress,
         ];
     }
 }
