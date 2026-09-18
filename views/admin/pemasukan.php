@@ -303,13 +303,14 @@ include '../partials/helpers.php';
                         <th>Tanggal Bayar</th>
                         <th>Status</th>
                         <th>Metode</th>
-                        <th style="text-align:center;width:130px;">Aksi</th>
+                        <th style="text-align:center;">Bukti</th>
+                        <th style="text-align:center;width:210px;">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($data)): ?>
                         <tr>
-                            <td colspan="8">
+                            <td colspan="9">
                                 <div class="dash-empty">
                                     <div class="t"><?= $cari !== '' ? 'Tidak ada hasil untuk "' . htmlspecialchars($cari) . '"' : 'Belum ada data pemasukan' ?></div>
                                     <div class="s"><?= $cari === '' ? 'Catat pemasukan siswa melalui tombol Tambah' : 'Coba kata kunci lain' ?></div>
@@ -338,6 +339,19 @@ include '../partials/helpers.php';
                                 <td><?= status_pill($p['status']) ?></td>
                                 <td><?= metode_pill($p['metode'] ?? null) ?></td>
                                 <td style="text-align:center;">
+                                    <?php if (!empty($p['bukti_transfer'])): ?>
+                                        <button class="dash-btn dash-btn-light dash-btn-sm"
+                                                data-bs-toggle="modal" data-bs-target="#modalBuktiVerifikasi"
+                                                data-img="<?= BASE_URL . '/' . htmlspecialchars($p['bukti_transfer']) ?>"
+                                                data-title="Bukti Transfer <?= htmlspecialchars($p['nama']) ?>"
+                                                data-catatan="<?= htmlspecialchars($p['catatan'] ?? '') ?>">
+                                            <i class="bi bi-image"></i> Lihat
+                                        </button>
+                                    <?php else: ?>
+                                        <span style="color:var(--text-muted);font-size:12px;">-</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td style="text-align:center;">
                                     <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
                                         <button class="dash-btn dash-btn-light dash-btn-sm"
                                                 data-bs-toggle="modal" data-bs-target="#modalPembayaran"
@@ -350,6 +364,16 @@ include '../partials/helpers.php';
                                                 data-tanggal="<?= $p['tanggal_bayar'] ?? '' ?>">
                                             <i class="bi bi-pencil"></i> Edit
                                         </button>
+                                        <?php if ($p['status'] !== 'lunas'): ?>
+                                        <form method="post" action="pemasukan.php<?= $back ?>" style="display:inline;"
+                                              onsubmit="return confirmDelete(event, 'Tandai <?= htmlspecialchars($p['nama']) ?> (<?= htmlspecialchars(Koneksi::periodeLabel($p['periode'])) ?>) sebesar <?= rupiah((float)$p['jumlah']) ?> sebagai sudah bayar?')">
+                                            <?= Koneksi::csrfField() ?>
+                                            <input type="hidden" name="setuju_verifikasi" value="<?= $p['id'] ?>">
+                                            <button type="submit" class="dash-btn dash-btn-primary dash-btn-sm">
+                                                <i class="bi bi-check2-circle"></i> Sudah Bayar
+                                            </button>
+                                        </form>
+                                        <?php endif; ?>
                                         <form method="post" action="pemasukan.php<?= $back ?>" style="display:inline;"
                                               onsubmit="return confirmDelete(event, 'Yakin hapus pemasukan <?= htmlspecialchars($p['nama']) ?> sebesar <?= rupiah((float)$p['jumlah']) ?>?')">
                                             <?= Koneksi::csrfField() ?>

@@ -95,6 +95,17 @@ class SiswaDashboardController
             [$siswa_id]
         )->fetch_assoc()['c'] ?? 0);
 
+        /* Setoran siswa pada bulan berjalan (status kiriman di dekat form upload). */
+        $setoran_ini = [];
+        if ($siswa_id > 0) {
+            $r_set = $db::q(
+                "SELECT id, periode, jumlah, status, metode, tanggal_bayar, bukti_transfer, catatan, created_at
+                 FROM pembayaran WHERE siswa_id = ? AND periode = ? ORDER BY id DESC",
+                [$siswa_id, date('Y-m')]
+            );
+            $setoran_ini = $r_set ? $r_set->fetch_all(MYSQLI_ASSOC) : [];
+        }
+
         $jumlah_siswa = (int)Koneksi::jumlahSiswa();
         $siswa_kontribusi = (int)($db::q("SELECT COUNT(DISTINCT siswa_id) c FROM pembayaran WHERE status = 'lunas'")->fetch_assoc()['c'] ?? 0);
 
@@ -164,6 +175,7 @@ class SiswaDashboardController
             'kelas_remainder'       => $kelas_remainder,
             'pct_kelas'             => $pct_kelas,
             'pending_saya'          => $pending_saya,
+            'setoran_ini'           => $setoran_ini,
             'jumlah_siswa'          => $jumlah_siswa,
             'siswa_kontribusi'      => $siswa_kontribusi,
             'pengeluaran_total'     => $pengeluaran_total,

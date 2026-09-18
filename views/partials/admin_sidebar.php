@@ -57,23 +57,16 @@ $username = $_SESSION['nama'] ?? $_SESSION['username'] ?? 'Bendahara';
     </div>
 </nav>
 
-<nav class="mobile-nav">
-    <a class="<?= $active == 'dashboard' ? 'active' : '' ?>" href="dashboard.php">
-        <i class="bi bi-grid-1x2-fill"></i> Dashboard
-    </a>
-    <a class="<?= $active == 'siswa' ? 'active' : '' ?>" href="siswa.php">
-        <i class="bi bi-people-fill"></i> Siswa
-    </a>
-    <a class="<?= $active == 'pemasukan' ? 'active' : '' ?>" href="pemasukan.php">
-        <i class="bi bi-wallet-fill"></i> Pemasukan
-    </a>
-    <a class="<?= $active == 'pengeluaran' ? 'active' : '' ?>" href="pengeluaran.php">
-        <i class="bi bi-cart-dash-fill"></i> Keluar Kas
-    </a>
-    <a class="<?= $active == 'belanja' ? 'active' : '' ?>" href="belanja.php">
-        <i class="bi bi-bag-check-fill"></i> Belanja
-    </a>
-    <a class="<?= $active == 'laporan' ? 'active' : '' ?>" href="laporan.php">
-        <i class="bi bi-file-text"></i> Laporan
-    </a>
-</nav>
+<?php $mobile_active = $active ?? 'dashboard'; ?>
+<?php $mobile_user = $username; ?>
+<?php $mobile_user_role = 'Bendahara'; ?>
+<?php $mobile_links = [
+    ['key' => 'dashboard',   'href' => 'dashboard.php',     'icon' => 'bi-grid-1x2-fill', 'label' => 'Dashboard'],
+    ['key' => 'siswa',       'href' => 'siswa.php',         'icon' => 'bi-people-fill',   'label' => 'Data Siswa'],
+    ['key' => 'pemasukan',   'href' => 'pemasukan.php',     'icon' => 'bi-wallet-fill',   'label' => 'Pemasukan'],
+    ['key' => 'pengeluaran', 'href' => 'pengeluaran.php',   'icon' => 'bi-cart-dash-fill','label' => 'Pengeluaran'],
+    ['key' => 'belanja',     'href' => 'belanja.php',       'icon' => 'bi-bag-check-fill','label' => 'Target Belanja'],
+    ['key' => 'pengaturan',  'href' => 'pengaturan.php',    'icon' => 'bi-gear-fill',     'label' => 'Pengaturan'],
+    ['key' => 'laporan',     'href' => 'laporan.php',       'icon' => 'bi-file-text',     'label' => 'Laporan'],
+]; ?>
+<?php include __DIR__ . '/mobile_nav.php'; ?>

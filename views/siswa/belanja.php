@@ -151,19 +151,6 @@ $qris_img = Koneksi::pengaturan('qris_path', 'assets/img/qris.png');
     <?php endforeach; ?>
 </div>
 
-<nav class="mobile-nav">
-    <a href="dashboard.php">
-        <i class="bi bi-grid-1x2-fill"></i> Dashboard
-    </a>
-    <a class="active" href="belanja.php">
-        <i class="bi bi-cart-check"></i> Belanja
-    </a>
-    <a href="pengeluaran.php">
-        <i class="bi bi-cart-dash-fill"></i> Pengeluaran
-    </a>
-    <a href="../../function/logout.php" class="quit">
-        <i class="bi bi-box-arrow-right"></i> Keluar
-    </a>
-</nav>
+<?php include '../partials/siswa_mobile_nav.php'; ?>
 
 <?php include '../partials/footer.php'; ?>

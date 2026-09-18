@@ -124,7 +124,7 @@ include '../partials/helpers.php';
         <div style="padding:0 20px 20px;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
                 <div style="font-weight:700;font-size:13px;color:var(--text-primary);">Progres Per Siswa (<?= count($students) ?> siswa)</div>
-                <div style="display:flex;gap:8px;align-items:center;">
+                <div style="display:flex;gap:8px;align-items:center;" class="prog-ctl">
                     <input type="text" class="form-control" style="padding:6px 10px;font-size:12px;border-radius:8px;width:180px;"
                            placeholder="Cari nama siswa..." oninput="filterSiswa(this, 'students-<?= $it['id'] ?>')">
                     <button class="dash-btn dash-btn-primary" style="padding:5px 12px;font-size:12px;"

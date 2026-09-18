@@ -162,7 +162,7 @@ class PembayaranController
         $per_page = 10;
         $page = max(1, (int)($_GET['hal'] ?? 1));
 
-        $sql = "SELECT p.id, p.siswa_id, p.periode, p.jumlah, p.status, p.metode, p.tanggal_bayar, s.nama, s.nomor_absen
+        $sql = "SELECT p.id, p.siswa_id, p.periode, p.jumlah, p.status, p.metode, p.tanggal_bayar, p.bukti_transfer, p.catatan, s.nama, s.nomor_absen
                 FROM pembayaran p
                 INNER JOIN siswa s ON s.id = p.siswa_id";
         $conditions = [];

@@ -117,49 +117,189 @@ $banner = [
             </div>
         </div>
 
-        <!-- Form Upload Bukti Transfer -->
-        <div class="dash-card" id="upload-bukti">
+<!-- Form Upload Bukti Transfer -->
+        <div class="dash-card dash-upload" id="upload-bukti">
             <div class="dash-card-head">
                 <div>
-                    <div class="dash-card-title">Kontribusi &amp; Upload Bukti</div>
+                    <div class="dash-card-title">Kontribusi & Upload Bukti</div>
                     <div class="dash-card-sub">Upload bukti transfer untuk periode <?= htmlspecialchars(Koneksi::periodeLabel($periode_now)) ?></div>
                 </div>
             </div>
-            <form action="<?= BASE_URL ?>/function/setor_bayar.php" method="POST" enctype="multipart/form-data" style="padding:0 20px 20px;">
+
+            <?php
+            $jml_setoran  = count($setoran_ini);
+            $setoran_lunas = $setoran_pending = $setoran_belum = 0;
+            $setoran_total = 0.0;
+            foreach ($setoran_ini as $_s) {
+                $setoran_total += (float)$_s['jumlah'];
+                if ($_s['status'] === 'lunas')      $setoran_lunas++;
+                elseif ($_s['status'] === 'pending') $setoran_pending++;
+                else                                 $setoran_belum++;
+            }
+            if ($setoran_pending > 0) {
+                $ringkas = ['txt' => 'Menunggu Verifikasi', 'cls' => 'warn', 'icon' => 'bi-clock-history'];
+            } elseif ($setoran_lunas > 0 && $setoran_belum === 0) {
+                $ringkas = ['txt' => 'Semua Sudah Disetorkan', 'cls' => 'success', 'icon' => 'bi-check-circle-fill'];
+            } elseif ($setoran_lunas > 0) {
+                $ringkas = ['txt' => 'Sebagian Sudah Disetorkan', 'cls' => 'warn', 'icon' => 'bi-hourglass-split'];
+            } else {
+                $ringkas = ['txt' => 'Belum Disetorkan', 'cls' => 'muted', 'icon' => 'bi-dash-circle'];
+            }
+            ?>
+
+            <div class="dash-setoran">
+                <div class="dash-setoran-top">
+                    <div class="dash-setoran-head">
+                        <span class="dash-setoran-title"><i class="bi bi-clipboard-check"></i> Status Kiriman Bulan Ini</span>
+                        <?php if ($jml_setoran > 0): ?>
+                            <span class="dash-status-pill <?= $ringkas['cls'] ?>"><i class="bi <?= $ringkas['icon'] ?>"></i> <?= $ringkas['txt'] ?></span>
+                        <?php endif; ?>
+                    </div>
+                    <?php if ($jml_setoran > 0): ?>
+                        <div class="dash-setoran-sub">
+                            <span><?= $jml_setoran . ($jml_setoran === 1 ? ' kiriman tercatat' : ' kiriman tercatat') ?></span>
+                            <span class="dot">&middot;</span>
+                            <span>Total <b class="tot"><?= rupiah($setoran_total) ?></b></span>
+                        </div>
+                    <?php else: ?>
+                        <div class="dash-setoran-sub">Pantau kiriman bukti kas kamu bulan ini</div>
+                    <?php endif; ?>
+                </div>
+
+                <?php if ($setoran_ini): ?>
+                    <div class="dash-setoran-list">
+                        <?php foreach ($setoran_ini as $s): ?>
+                            <?php
+                            $metode_label = ['langsung' => 'Tunai', 'dana' => 'Send DANA', 'qris' => 'QRIS'][$s['metode'] ?? 'langsung'] ?? 'Tunai';
+                            $tgl_kirim = $s['tanggal_bayar'] ? date('d M Y', strtotime($s['tanggal_bayar'])) : (isset($s['created_at']) ? date('d M Y', strtotime($s['created_at'])) : '-');
+                            ?>
+                            <div class="dash-setoran-item">
+                                <div class="dash-setoran-ic <?= $s['status'] === 'lunas' ? 'ok' : ($s['status'] === 'pending' ? 'wait' : 'no') ?>">
+                                    <i class="bi <?= $s['status'] === 'lunas' ? 'bi-check-lg' : ($s['status'] === 'pending' ? 'bi-clock-history' : 'bi-dash-lg') ?>"></i>
+                                </div>
+                                <div class="dash-setoran-main">
+                                    <span class="dash-setoran-amt"><?= rupiah((float)$s['jumlah']) ?></span>
+                                    <span class="dash-setoran-meta"><?= $tgl_kirim ?> &middot; <?= htmlspecialchars($metode_label) ?></span>
+                                </div>
+                                <div class="dash-setoran-act">
+                                    <?= status_pill($s['status']) ?>
+                                    <?php if (!empty($s['bukti_transfer'])): ?>
+                                        <button class="dash-btn dash-btn-light dash-setoran-bukti"
+                                                data-bs-toggle="modal" data-bs-target="#modalBukti"
+                                                data-img="<?= BASE_URL . '/' . htmlspecialchars($s['bukti_transfer']) ?>"
+                                                data-title="Bukti Transfer <?= htmlspecialchars(Koneksi::periodeLabel($s['periode'])) ?>"
+                                                data-catatan="<?= htmlspecialchars($s['catatan'] ?? '') ?>">
+                                            <i class="bi bi-image"></i> Lihat
+                                        </button>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+
+                    <?php if ($setoran_pending > 0): ?>
+                        <div class="dash-setoran-note wait">
+                            <i class="bi bi-clock-history"></i>
+                            <span><strong><?= $setoran_pending ?></strong> kiriman masih menunggu verifikasi bendahara. Statusnya otomatis jadi <strong>Lunas</strong> setelah diverifikasi.</span>
+                        </div>
+                    <?php elseif ($setoran_lunas > 0 && $setoran_belum > 0): ?>
+                        <div class="dash-setoran-note warn">
+                            <i class="bi bi-hourglass-split"></i>
+                            <span>Sebagian kirimanmu belum disetorkan — begitu ditransfer, upload buktinya di bawah biar statusnya ter-update.</span>
+                        </div>
+                    <?php endif; ?>
+                <?php else: ?>
+                    <div class="dash-setoran-empty">
+                        <i class="bi bi-inbox"></i>
+                        <div>
+                            <span class="t">Belum ada kiriman bulan ini</span>
+                            <span class="s">Setelah transfer, upload bukti di bawah supaya setoran tercatat &amp; statusnya bisa kamu pantau.</span>
+                        </div>
+                    </div>
+                <?php endif; ?>
+            </div>
+
+            <form class="dash-payform" id="formSetoran" action="<?= BASE_URL ?>/function/setor_bayar.php" method="POST" enctype="multipart/form-data" novalidate>
                 <?= Koneksi::csrfField() ?>
                 <input type="hidden" name="periode" value="<?= $periode_now ?>">
-                <div style="display:flex;flex-direction:column;gap:14px;">
-                    <div style="display:flex;gap:12px;flex-wrap:wrap;">
-                        <div style="flex:1;min-width:200px;">
-                            <label style="display:block;font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em;">Jumlah (Rp)</label>
-                            <input type="number" class="form-control" name="jumlah"
-                                   min="1" step="1000"
-                                   placeholder="Masukkan jumlah, berapa saja"
-                                   required style="border-radius:10px;">
-                        </div>
-                        <div style="flex:1;min-width:200px;">
-                            <label style="display:block;font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em;">Metode</label>
-                            <select class="form-select" name="metode" style="border-radius:10px;">
-                                <option value="dana">Send Dana</option>
-                                <option value="qris">QRIS</option>
-                                <option value="langsung">Langsung (Cash)</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div>
-                        <label style="display:block;font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em;">Bukti Transfer (Foto)</label>
-                        <input type="file" class="form-control" name="bukti_transfer" accept="image/*"
-                               style="border-radius:10px;" required>
-                        <div style="font-size:11px;color:var(--text-muted);margin-top:3px;">Format: JPG, PNG, WebP. Maks 5MB.</div>
-                    </div>
-                    <div>
-                        <label style="display:block;font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em;">Catatan (Opsional)</label>
-                        <input type="text" class="form-control" name="catatan" placeholder="Contoh: Transfer via BCA" style="border-radius:10px;">
-                    </div>
-                    <button type="submit" name="kontribusi_submit" class="dash-btn dash-btn-primary" style="width:100%;justify-content:center;padding:12px;">
-                        <i class="bi bi-cloud-arrow-up"></i> Kirim Kontribusi &amp; Upload Bukti
-                    </button>
+
+                <div class="dash-payform-head">
+                    <span class="ic"><i class="bi bi-send-plus"></i></span>
+                    <span>Kirim Setoran Baru</span>
                 </div>
+
+                <div class="dash-payform-grid">
+                    <div class="pay-field">
+                        <label class="pay-label" for="jumlah">Jumlah Setoran</label>
+                        <div class="pay-amount">
+                            <span class="pay-currency">Rp</span>
+                            <input type="number" id="jumlah" name="jumlah" min="1" step="1000"
+                                   placeholder="0" inputmode="numeric">
+                        </div>
+                        <?php if ($per_siswa_now > 0): ?>
+                            <div class="pay-chips">
+                                <span class="pay-chip-tag">Cepat pilih</span>
+                                <?php for ($i = 1; $i <= 3; $i++): ?>
+                                    <button type="button" class="pay-chip" data-amount="<?= (int)round($per_siswa_now * $i) ?>">
+                                        <?= rupiah($per_siswa_now * $i) ?>
+                                    </button>
+                                <?php endfor; ?>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="pay-field">
+                        <label class="pay-label">Metode Pembayaran</label>
+                        <div class="pay-methods" id="payMethods">
+                            <label class="pay-method active" data-m="dana">
+                                <input type="radio" name="metode" value="dana" checked hidden>
+                                <i class="bi bi-send"></i><span>DANA</span>
+                            </label>
+                            <label class="pay-method" data-m="qris">
+                                <input type="radio" name="metode" value="qris" hidden>
+                                <i class="bi bi-qr-code"></i><span>QRIS</span>
+                            </label>
+                            <label class="pay-method" data-m="langsung">
+                                <input type="radio" name="metode" value="langsung" hidden>
+                                <i class="bi bi-cash-coin"></i><span>Tunai</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pay-field">
+                    <label class="pay-label">Bukti Transfer</label>
+                    <label class="pay-drop" id="payDrop" for="bukti_transfer">
+                        <span class="pay-drop-ic"><i class="bi bi-cloud-arrow-up"></i></span>
+                        <span class="t">Upload foto bukti transfer</span>
+                        <span class="s" id="payDropSub">Klik untuk pilih &middot; tarik &amp; lepas file</span>
+                    </label>
+                    <input type="file" class="pay-file-input" id="bukti_transfer" name="bukti_transfer" accept="image/">
+                    <div class="pay-file" id="payFile" hidden>
+                        <img id="payFileImg" alt="Preview bukti">
+                        <div class="pay-file-meta">
+                            <span class="n" id="payFileName">-</span>
+                            <span class="s" id="payFileSize"></span>
+                        </div>
+                        <button type="button" class="pay-file-clear" id="payFileClear" title="Hapus file"><i class="bi bi-x"></i></button>
+                    </div>
+                    <div class="pay-feedback" id="payFeedback" hidden>
+                        <i class="bi bi-exclamation-circle"></i><span id="payFeedbackText"></span>
+                    </div>
+                </div>
+
+                <div class="pay-field">
+                    <label class="pay-label" for="catatan">Catatan <em>(opsional)</em></label>
+                    <div class="pay-note-input">
+                        <i class="bi bi-chat-left-text"></i>
+                        <input type="text" id="catatan" name="catatan" placeholder="Contoh: Transfer via BCA, scan QRIS">
+                    </div>
+                </div>
+
+                <button type="submit" name="kontribusi_submit" class="pay-submit">
+                    <span id="paySubmitTxt">Kirim Kontribusi &amp; Upload Bukti</span>
+                    <i class="bi bi-arrow-right"></i>
+                </button>
             </form>
         </div>
 
@@ -342,6 +482,160 @@ $banner = [
         });
         </script>
 
+        <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const form      = document.getElementById('formSetoran');
+            const methods   = document.getElementById('payMethods');
+            const jumlahInp = document.getElementById('jumlah');
+            const fileInp   = document.getElementById('bukti_transfer');
+            const drop      = document.getElementById('payDrop');
+            const payFile   = document.getElementById('payFile');
+            const fileImg   = document.getElementById('payFileImg');
+            const fileName  = document.getElementById('payFileName');
+            const fileSize  = document.getElementById('payFileSize');
+            const fileClear = document.getElementById('payFileClear');
+            const feedback  = document.getElementById('payFeedback');
+            const feedbackTxt = document.getElementById('payFeedbackText');
+
+            if (!form || !methods) return;
+
+            const dropSub     = document.getElementById('payDropSub');
+            const submitTxt   = document.getElementById('paySubmitTxt');
+            const submitBtn   = form.querySelector('.pay-submit');
+
+            function isTunai() {
+                const act = methods.querySelector('.pay-method.active');
+                return act ? act.dataset.m === 'langsung' : false;
+            }
+            function refreshMetodeUI() {
+                const tunai = isTunai();
+                fileInp.required = !tunai;
+                drop.classList.toggle('pay-drop-optional', tunai);
+                if (dropSub) {
+                    dropSub.textContent = tunai
+                        ? 'Opsional untuk setoran tunai langsung ke bendahara'
+                        : 'Klik untuk pilih \u00B7 tarik & lepas file';
+                }
+                if (submitTxt) {
+                    submitTxt.textContent = tunai
+                        ? 'Konfirmasi Setoran Tunai'
+                        : 'Kirim Kontribusi & Upload Bukti';
+                }
+                if (tunai) hideFile();
+            }
+
+            methods.addEventListener('click', function (e) {
+                const pill = e.target.closest('.pay-method');
+                if (!pill) return;
+                methods.querySelectorAll('.pay-method').forEach(p => p.classList.remove('active'));
+                pill.classList.add('active');
+                const radio = pill.querySelector('input[name="metode"]');
+                if (radio) radio.checked = true;
+                refreshMetodeUI();
+            });
+
+            document.querySelectorAll('.pay-chip').forEach(chip => {
+                chip.addEventListener('click', function () {
+                    jumlahInp.value = this.dataset.amount;
+                    jumlahInp.focus();
+                });
+            });
+
+            refreshMetodeUI();
+
+            function resetDropDrag() { drop.classList.remove('dragover'); }
+            function hideFile() {
+                payFile.hidden = true;
+                drop.hidden = false;
+                fileInp.value = '';
+                fileImg.removeAttribute('src');
+                resetDropDrag();
+            }
+            function showFeedback(msg) {
+                feedbackTxt.textContent = msg;
+                feedback.hidden = false;
+                feedback.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            }
+            function hideFeedback() { feedback.hidden = true; }
+            function fmtBytes(bytes) {
+                if (!bytes) return '';
+                if (bytes < 1024) return bytes + ' B';
+                if (bytes < 1048576) return (bytes / 1024).toFixed(0) + ' KB';
+                return (bytes / 1048576).toFixed(1) + ' MB';
+            }
+
+            function loadPreview() {
+                hideFeedback();
+                resetDropDrag();
+                const file = fileInp.files && fileInp.files[0];
+                if (!file) return;
+                const isImgExt = /\.(jpe?g|png|webp)$/i.test(file.name);
+                const isImgMime = file.type ? file.type.startsWith('image/') : true;
+                if (!isImgExt) {
+                    showFeedback('Ekstensi file harus .jpg, .png, atau .webp.');
+                    hideFile();
+                    return;
+                }
+                if (!isImgMime) {
+                    showFeedback('File harus berupa foto/gambar, bukan file lain.');
+                    hideFile();
+                    return;
+                }
+                if (file.size > 5 * 1024 * 1024) {
+                    showFeedback('Ukuran file maksimal 5MB. Pilih foto yang lebih kecil.');
+                    hideFile();
+                    return;
+                }
+                fileName.textContent = file.name;
+                fileSize.textContent = fmtBytes(file.size);
+                const reader = new FileReader();
+                reader.onload = function (ev) {
+                    const img = new Image();
+                    img.onload = function () {
+                        fileImg.src = ev.target.result;
+                        payFile.hidden = false;
+                        drop.hidden = true;
+                    };
+                    img.onerror = function () {
+                        showFeedback('File "valid" tapi tidak terbaca sebagai foto — gunakan JPG/PNG/WebP asli.');
+                        hideFile();
+                    };
+                    img.src = ev.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+
+            fileInp.addEventListener('change', loadPreview);
+            fileClear.addEventListener('click', hideFile);
+
+            drop.addEventListener('dragover', function (e) { e.preventDefault(); drop.classList.add('dragover'); });
+            drop.addEventListener('dragleave', resetDropDrag);
+            drop.addEventListener('drop', function (e) {
+                e.preventDefault();
+                resetDropDrag();
+                if (e.dataTransfer.files.length) {
+                    fileInp.files = e.dataTransfer.files;
+                    loadPreview();
+                }
+            });
+
+            form.addEventListener('submit', function (e) {
+                const jumlah = parseFloat(jumlahInp.value);
+                if (!jumlah || jumlah <= 0) {
+                    e.preventDefault();
+                    showFeedback('Isi dulu jumlah setorannya.');
+                    jumlahInp.focus();
+                    return;
+                }
+                if (!isTunai() && (!fileInp.files || !fileInp.files[0])) {
+                    e.preventDefault();
+                    showFeedback('Pilih dulu foto bukti transfernya.');
+                    return;
+                }
+            });
+        });
+        </script>
+
         <div class="dash-card">
             <div class="dash-card-head">
                 <div>
@@ -383,16 +677,6 @@ $banner = [
     </div>
 </div>
 
-<nav class="mobile-nav">
-    <a class="active" href="dashboard.php">
-        <i class="bi bi-grid-1x2-fill"></i> Dashboard
-    </a>
-    <a href="pengeluaran.php">
-        <i class="bi bi-cart-dash-fill"></i> Pengeluaran
-    </a>
-    <a href="../../function/logout.php" class="quit">
-        <i class="bi bi-box-arrow-right"></i> Keluar
-    </a>
-</nav>
+<?php include '../partials/siswa_mobile_nav.php'; ?>
 
 <?php include '../partials/footer.php'; ?>
