@@ -43,6 +43,13 @@ class SiswaController
             $id          = (int)($_POST['id'] ?? 0);
             $nama        = trim($_POST['nama'] ?? '');
             $nomor_absen = (int)($_POST['nomor_absen'] ?? 0);
+            $role        = ($_POST['role'] ?? 'siswa') === (AuthController::ROLE_BENDAHARA) ? AuthController::ROLE_BENDAHARA : AuthController::ROLE_SISWA;
+
+            if ($id > 0 && $id === (int)($_SESSION['siswa_id'] ?? 0)) {
+                Koneksi::setFlash('error', 'Tidak dapat mengubah role akun sendiri.');
+                header("Location: siswa.php" . $back);
+                exit;
+            }
 
             if ($nama === '' || $nomor_absen <= 0) {
                 Koneksi::setFlash('error', 'Nama dan nomor absen wajib diisi.');
@@ -58,10 +65,10 @@ class SiswaController
             }
 
             if ($id > 0) {
-                $db::q("UPDATE siswa SET nama = ?, nomor_absen = ? WHERE id = ?", [$nama, $nomor_absen, $id]);
+                $db::q("UPDATE siswa SET nama = ?, nomor_absen = ?, role = ? WHERE id = ?", [$nama, $nomor_absen, $role, $id]);
                 Koneksi::setFlash('success', 'Data siswa berhasil diperbarui.');
             } else {
-                $db::q("INSERT INTO siswa (nama, nomor_absen) VALUES (?, ?)", [$nama, $nomor_absen]);
+                $db::q("INSERT INTO siswa (nama, nomor_absen, role) VALUES (?, ?, ?)", [$nama, $nomor_absen, $role]);
                 Koneksi::setFlash('success', 'Data siswa berhasil ditambahkan.');
             }
             header("Location: siswa.php" . $back);

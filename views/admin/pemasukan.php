@@ -107,6 +107,46 @@ include '../partials/helpers.php';
     <div class="dash-card target-card" style="margin-bottom:22px;">
         <div class="dash-card-head" style="margin-bottom:0;">
             <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+                <div class="target-head-icon" style="background:#eef2ff;color:#4f46e5;">
+                    <i class="bi bi-wallet2"></i>
+                </div>
+                <div style="flex:1;min-width:180px;">
+                    <div class="dash-card-title">Pengaturan Rekening &amp; QRIS</div>
+                    <div class="dash-card-sub">Nomor DANA &amp; QRIS yang ditampilkan ke siswa untuk pembayaran online</div>
+                </div>
+            </div>
+        </div>
+
+        <form class="target-form" method="post" action="">
+            <?= Koneksi::csrfField() ?>
+            <div class="form-grid">
+                <div>
+                    <label class="form-label">Nomor DANA</label>
+                    <input type="text" class="form-control" name="dana_nomor"
+                           value="<?= htmlspecialchars($setting['dana_nomor']) ?>" placeholder="08xx-xxxx-xxxx">
+                </div>
+                <div>
+                    <label class="form-label">Atas Nama DANA</label>
+                    <input type="text" class="form-control" name="dana_nama"
+                           value="<?= htmlspecialchars($setting['dana_nama']) ?>" placeholder="Nama pemilik DANA">
+                </div>
+                <div class="full">
+                    <label class="form-label">Lokasi Gambar QRIS (path relatif)</label>
+                    <input type="text" class="form-control" name="qris_path"
+                           value="<?= htmlspecialchars($setting['qris_path']) ?>" placeholder="assets/img/qris.png">
+                </div>
+            </div>
+            <div class="target-form-actions">
+                <button type="submit" name="simpan_setting" value="1" class="dash-btn dash-btn-primary">
+                    <i class="bi bi-check-circle"></i> Simpan Pengaturan
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="dash-card target-card" style="margin-bottom:22px;">
+        <div class="dash-card-head" style="margin-bottom:0;">
+            <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
                 <div class="target-head-icon">
                     <i class="bi bi-bullseye"></i>
                 </div>

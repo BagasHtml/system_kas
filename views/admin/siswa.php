@@ -46,6 +46,7 @@ include '../partials/helpers.php';
                         <th style="width:60px;">No</th>
                         <th>Nama Siswa</th>
                         <th style="width:120px;">Nomor Absen</th>
+                        <th style="width:120px;">Peran</th>
                         <th style="width:160px;">Tanggal Daftar</th>
                         <th style="text-align:center;width:130px;">Aksi</th>
                     </tr>
@@ -53,7 +54,7 @@ include '../partials/helpers.php';
                 <tbody>
                     <?php if (empty($siswa)): ?>
                         <tr>
-                            <td colspan="5">
+                            <td colspan="6">
                                 <div class="dash-empty">
                                     <div class="t"><?= $cari !== '' ? 'Tidak ada hasil untuk "' . htmlspecialchars($cari) . '"' : 'Belum ada data siswa' ?></div>
                                     <div class="s"><?= $cari === '' ? 'Tambah siswa melalui tombol Tambah Siswa' : 'Coba kata kunci lain' ?></div>
@@ -74,6 +75,17 @@ include '../partials/helpers.php';
                                     </div>
                                 </td>
                                 <td><span class="dash-amount"><?= (int)$s['nomor_absen'] ?></span></td>
+                                <td>
+                                    <?php if (($s['role'] ?? 'siswa') === 'bendahara'): ?>
+                                        <span style="display:inline-flex;align-items:center;gap:4px;background:#fff8e6;color:#b45309;border:1px solid #fef3c7;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;">
+                                            <i class="bi bi-person-gear"></i> Bendahara
+                                        </span>
+                                    <?php else: ?>
+                                        <span style="display:inline-flex;align-items:center;gap:4px;background:#e9f9f3;color:#0e9f6e;border:1px solid #d2f2e4;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;">
+                                            <i class="bi bi-person"></i> Siswa
+                                        </span>
+                                    <?php endif; ?>
+                                </td>
                                 <td style="color:var(--text-secondary);"><?= date('d/m/Y', strtotime($s['created_at'])) ?></td>
                                 <td style="text-align:center;">
                                     <div style="display:flex;gap:6px;justify-content:center;">
@@ -81,7 +93,8 @@ include '../partials/helpers.php';
                                                 data-bs-toggle="modal" data-bs-target="#modalSiswa"
                                                 data-id="<?= $s['id'] ?>"
                                                 data-nama="<?= htmlspecialchars($s['nama']) ?>"
-                                                data-absen="<?= $s['nomor_absen'] ?>">
+                                                data-absen="<?= $s['nomor_absen'] ?>"
+                                                data-role="<?= ($s['role'] ?? 'siswa') === 'bendahara' ? 'bendahara' : 'siswa' ?>">
                                             <i class="bi bi-pencil"></i>
                                         </button>
                                         <form method="post" action="siswa.php<?= $back ?>" style="display:inline;"
@@ -130,6 +143,14 @@ include '../partials/helpers.php';
                         <label class="form-label">Nomor Absen</label>
                         <input type="number" class="form-control" id="nomor_absen" name="nomor_absen" min="1" required>
                     </div>
+                    <div class="mb-3">
+                        <label class="form-label">Peran</label>
+                        <select class="form-select" id="role" name="role">
+                            <option value="siswa">Siswa</option>
+                            <option value="bendahara">Bendahara (pengelola kas)</option>
+                        </select>
+                        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Bendahara bisa mengelola dashboard admin setelah login.</div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="dash-btn dash-btn-light" data-bs-dismiss="modal">Batal</button>
@@ -149,11 +170,13 @@ document.getElementById('modalSiswa')?.addEventListener('show.bs.modal', (e) => 
         document.getElementById('edit_id').value = id;
         document.getElementById('nama').value = btn.dataset.nama || '';
         document.getElementById('nomor_absen').value = btn.dataset.absen || '';
+        document.getElementById('role').value = btn.dataset.role || 'siswa';
     } else {
         document.getElementById('modalTitle').textContent = 'Tambah Siswa';
         document.getElementById('edit_id').value = '';
         document.getElementById('nama').value = '';
         document.getElementById('nomor_absen').value = '';
+        document.getElementById('role').value = 'siswa';
     }
 });
 window.addEventListener('DOMContentLoaded', () => {

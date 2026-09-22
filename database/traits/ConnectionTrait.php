@@ -6,8 +6,6 @@ trait ConnectionTrait
     public static $db = null;
 
     private static $local = 'localhost';
-    private static $username = 'root';
-    private static $password = 'bagas_tresna123';
     private static $dbname = 'db_kas_kelas';
 
     protected static function connection()
@@ -17,8 +15,8 @@ trait ConnectionTrait
         }
 
         $host = getenv('KAS_DB_HOST') ?: self::$local;
-        $user = getenv('KAS_DB_USER') ?: self::$username;
-        $pass = getenv('KAS_DB_PASS') ?: self::$password;
+        $user = getenv('KAS_DB_USER') ?: 'root';
+        $pass = getenv('KAS_DB_PASS') ?: '';
         $name = getenv('KAS_DB_NAME') ?: self::$dbname;
 
         $db = new mysqli($host, $user, $pass, $name);

@@ -30,14 +30,15 @@ function run_migrations() {
     }
 
     // 3. Add kategori & bukti_nota to pengeluaran
-    $checkKategori = Koneksi::executeQuery("SHOW COLUMNS FROM pengeluaran LIKE 'kategori'");
-    if ($checkKategori && $checkKategori->num_rows === 0) {
-        Koneksi::executeQuery("ALTER TABLE pembayaran ADD COLUMN kategori VARCHAR(50) DEFAULT 'Lainnya'");
-    }
-
     $checkPengeluaranKategori = Koneksi::executeQuery("SHOW COLUMNS FROM pengeluaran LIKE 'kategori'");
     if ($checkPengeluaranKategori && $checkPengeluaranKategori->num_rows === 0) {
         Koneksi::executeQuery("ALTER TABLE pengeluaran ADD COLUMN kategori VARCHAR(50) NOT NULL DEFAULT 'Lainnya' AFTER jumlah");
+    }
+
+    // Bersihkan kolom kategori yang salah sempat ditambahkan ke pembayaran (bug migrasi lama).
+    $checkPembayaranKategori = Koneksi::executeQuery("SHOW COLUMNS FROM pembayaran LIKE 'kategori'");
+    if ($checkPembayaranKategori && $checkPembayaranKategori->num_rows > 0) {
+        @Koneksi::executeQuery("ALTER TABLE pembayaran DROP COLUMN kategori");
     }
 
     $checkPengeluaranNota = Koneksi::executeQuery("SHOW COLUMNS FROM pengeluaran LIKE 'bukti_nota'");

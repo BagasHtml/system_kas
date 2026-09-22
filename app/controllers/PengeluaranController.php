@@ -74,18 +74,14 @@ class PengeluaranController
 
             // Handle Upload Bukti Nota
             $nota_path = null;
-            if (isset($_FILES['bukti_nota']) && $_FILES['bukti_nota']['error'] === UPLOAD_ERR_OK) {
-                $ext = strtolower(pathinfo($_FILES['bukti_nota']['name'], PATHINFO_EXTENSION));
-                $allowed = ['jpg', 'jpeg', 'png', 'webp'];
-                if (in_array($ext, $allowed)) {
-                    $filename = 'nota_' . time() . '_' . rand(100, 999) . '.' . $ext;
-                    $targetDir = str_replace('\\', '/', dirname(__DIR__, 2)) . '/assets/uploads/bukti_nota/';
-                    if (!is_dir($targetDir)) @mkdir($targetDir, 0777, true);
-                    $targetFile = $targetDir . $filename;
-                    if (move_uploaded_file($_FILES['bukti_nota']['tmp_name'], $targetFile)) {
-                        $nota_path = 'assets/uploads/bukti_nota/' . $filename;
-                    }
+            if (isset($_FILES['bukti_nota']) && $_FILES['bukti_nota']['error'] !== UPLOAD_ERR_NO_FILE) {
+                $upload = Koneksi::saveImageUpload($_FILES['bukti_nota'], 'bukti_nota', 'nota');
+                if (!$upload['ok']) {
+                    Koneksi::setFlash('error', $upload['error']);
+                    header("Location: pengeluaran.php" . $back);
+                    exit;
                 }
+                $nota_path = $upload['path'];
             }
 
             if ($id > 0) {

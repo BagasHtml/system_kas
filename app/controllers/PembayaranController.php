@@ -81,6 +81,21 @@ class PembayaranController
             exit;
         }
 
+        /* ===== PENGATURAN REKENING / QRIS (pembayaran online) ===== */
+        if (isset($_POST['simpan_setting'])) {
+            if (!Koneksi::csrfCheck()) {
+                Koneksi::setFlash('error', 'Token keamanan tidak valid. Muat ulang halaman lalu coba lagi.');
+                header("Location: pembayaran.php" . $back);
+                exit;
+            }
+            Koneksi::setSetting('dana_nomor', trim($_POST['dana_nomor'] ?? ''));
+            Koneksi::setSetting('dana_nama', trim($_POST['dana_nama'] ?? ''));
+            Koneksi::setSetting('qris_path', trim($_POST['qris_path'] ?? ''));
+            Koneksi::setFlash('success', 'Pengaturan rekening & QRIS berhasil disimpan.');
+            header("Location: pembayaran.php" . $back);
+            exit;
+        }
+
         /* ===== VERIFIKASI BUKTI TRANSFER ===== */
         if (isset($_POST['setuju_verifikasi'])) {
             if (!Koneksi::csrfCheck()) {
@@ -317,6 +332,7 @@ class PembayaranController
             'target_total_all'    => $target_total_all,
             'target_collected_all'=> $target_collected_all,
             'hero'                => $hero,
+            'setting'             => Koneksi::allSettings(),
         ];
     }
 }

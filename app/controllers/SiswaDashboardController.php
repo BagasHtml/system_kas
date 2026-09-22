@@ -18,6 +18,57 @@ class SiswaDashboardController
         $siswa_nama  = htmlspecialchars($_SESSION['nama'] ?? 'Siswa');
         $siswa_absen = htmlspecialchars($_SESSION['siswa_absen'] ?? '-');
 
+<<<<<<< HEAD
+=======
+        /* ===== HANDLE UPLOAD BUKTI TRANSFER ===== */
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['upload_bukti'])) {
+            if (!Koneksi::csrfCheck()) {
+                Koneksi::setFlash('error', 'Token tidak valid. Silakan coba lagi.');
+                header("Location: dashboard.php#bayar");
+                exit;
+            }
+
+            $periode = trim($_POST['periode'] ?? '');
+            $jumlah  = (float)($_POST['jumlah'] ?? 0);
+            $catatan = trim($_POST['catatan'] ?? '');
+            $metode  = in_array($_POST['metode'] ?? '', ['langsung', 'qris', 'dana'], true) ? $_POST['metode'] : 'dana';
+
+            if (!preg_match('/^\d{4}-\d{2}$/', $periode) || $jumlah <= 0) {
+                Koneksi::setFlash('error', 'Pilih bulan dan jumlah pembayaran yang valid.');
+                header("Location: dashboard.php#bayar");
+                exit;
+            }
+
+            $bukti_path = null;
+            if (!empty($_FILES['bukti_transfer']['name']) && ($_FILES['bukti_transfer']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+                $upload = Koneksi::saveImageUpload($_FILES['bukti_transfer'], 'bukti_transfer', 'bukti');
+                if (!$upload['ok']) {
+                    Koneksi::setFlash('error', $upload['error']);
+                    header("Location: dashboard.php#bayar");
+                    exit;
+                }
+                $bukti_path = $upload['path'];
+            }
+
+            if (!$bukti_path) {
+                Koneksi::setFlash('error', 'File bukti transfer wajib diupload.');
+                header("Location: dashboard.php#bayar");
+                exit;
+            }
+
+            $db::q(
+                "INSERT INTO pembayaran (siswa_id, periode, jumlah, status, metode, tanggal_bayar, bukti_transfer, catatan)
+                 VALUES (?, ?, ?, 'pending', ?, NOW(), ?, ?)
+                 ON DUPLICATE KEY UPDATE jumlah = ?, status = 'pending', metode = ?, tanggal_bayar = NOW(), bukti_transfer = ?, catatan = ?",
+                [$siswa_id, $periode, $jumlah, $metode, $bukti_path, $catatan, $jumlah, $metode, $bukti_path, $catatan]
+            );
+
+            Koneksi::setFlash('success', 'Konfirmasi pembayaran berhasil dikirim! Menunggu verifikasi dari bendahara.');
+            header("Location: dashboard.php#riwayat");
+            exit;
+        }
+
+>>>>>>> d67dedf (update layout and added new system for manage admin dashboard and added fix more bugs and update layout and added readme)
         $pembayaran = [];
         if ($siswa_id > 0) {
             $pembayaran = $db::q(
@@ -160,6 +211,8 @@ class SiswaDashboardController
             "SELECT keterangan, jumlah, tanggal FROM pengeluaran WHERE target_belanja_id IS NULL ORDER BY tanggal DESC, id DESC LIMIT 3"
         )->fetch_all(MYSQLI_ASSOC);
 
+        $setting = Koneksi::allSettings();
+
         return [
             'siswa_id'              => $siswa_id,
             'siswa_nama'            => $siswa_nama,
@@ -181,6 +234,7 @@ class SiswaDashboardController
             'pengeluaran_total'     => $pengeluaran_total,
             'pengeluaran_count'     => $pengeluaran_count,
             'pengeluaran_terakhir'  => $pengeluaran_terakhir,
+            'setting'               => $setting,
             'chart'                 => $chart,
             'max_chart'             => $max_chart,
             'chart_any'             => $chart_any,

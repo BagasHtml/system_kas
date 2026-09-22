@@ -1,0 +1,17 @@
+Options -Indexes
+
+RewriteEngine On
+
+# Blokir seluruh akses langsung HTTP ke direktori internal
+RewriteRule ^(database|app|tests)(/.*)?$ - [F,L]
+
+# function/ hanya boleh diakses untuk endpoint publik tertentu
+RewriteRule ^function/(?!search\.php$|logout\.php$).* - [F,L]
+
+# Cegah pengambilan direktori .git / file dotfiles sensitif
+RewriteRule ^\.git(/.*)?$ - [F,L]
+RewriteRule ^\.env(\.example)?$ - [F,L]
+
+<FilesMatch "^\.env">
+    Require all denied
+</FilesMatch>

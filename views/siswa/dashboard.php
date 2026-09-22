@@ -86,11 +86,19 @@ $banner = [
                     <div class="dash-pay-info">
                         <div class="dash-pay-row">
                             <span class="lbl">Nomor Dana</span>
+<<<<<<< HEAD
                             <span class="val num"><?= htmlspecialchars($dana_no) ?></span>
                         </div>
                         <div class="dash-pay-row">
                             <span class="lbl">Atas Nama</span>
                             <span class="val"><?= htmlspecialchars($dana_nm) ?></span>
+=======
+                            <span class="val num"><?= htmlspecialchars($setting['dana_nomor']) ?></span>
+                        </div>
+                        <div class="dash-pay-row">
+                            <span class="lbl">Atas Nama</span>
+                            <span class="val"><?= htmlspecialchars($setting['dana_nama']) ?></span>
+>>>>>>> d67dedf (update layout and added new system for manage admin dashboard and added fix more bugs and update layout and added readme)
                         </div>
                         <div class="dash-pay-row">
                             <span class="lbl">Bulan Kontribusi</span>
@@ -105,7 +113,11 @@ $banner = [
                         QRIS
                     </div>
                     <div class="dash-pay-qris">
+<<<<<<< HEAD
                         <img src="<?= BASE_URL ?>/<?= htmlspecialchars($qris_img) ?>" alt="QRIS Kas Kelas">
+=======
+                        <img src="<?= BASE_URL ?>/<?= htmlspecialchars($setting['qris_path']) ?>" alt="QRIS Kas Kelas">
+>>>>>>> d67dedf (update layout and added new system for manage admin dashboard and added fix more bugs and update layout and added readme)
                     </div>
                     <div class="dash-pay-hint">Scan kode di atas setelah transfer</div>
                 </div>
@@ -423,6 +435,7 @@ $banner = [
                                     <th>Metode</th>
                                     <th>Catatan</th>
                                     <th style="text-align:center;">Bukti</th>
+                                    <th style="text-align:center;">Struk</th>
                                 </tr>
                         </thead>
                         <tbody>
@@ -445,6 +458,16 @@ $banner = [
                                                     data-catatan="<?= htmlspecialchars($p['catatan'] ?? '') ?>">
                                                 <i class="bi bi-image"></i> Lihat
                                             </button>
+                                        <?php else: ?>
+                                            <span style="color:var(--text-muted);font-size:12px;">-</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td style="text-align:center;">
+                                        <?php if ($p['status'] === 'lunas'): ?>
+                                            <a class="dash-btn dash-btn-light" style="padding:4px 8px;font-size:12px;"
+                                               href="struk.php?id=<?= (int)$p['id'] ?>" title="Lihat / unduh struk pembayaran">
+                                                <i class="bi bi-receipt"></i> Struk
+                                            </a>
                                         <?php else: ?>
                                             <span style="color:var(--text-muted);font-size:12px;">-</span>
                                         <?php endif; ?>
